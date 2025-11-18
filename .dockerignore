@@ -1,0 +1,40 @@
+# Node modules directory
+node_modules/
+
+# Logs
+*.log
+
+# Build output directory
+.next/
+out/
+dist/
+
+# Docker files
+.dockerignore
+Dockerfile
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor configurations
+.vscode/
+.idea/
+
+# Testing directories or temporary files
+coverage/
+*.test.js
+*.test.ts
+
+# NPM / Yarn lock files
+<!-- package-lock.json
+yarn.lock -->
+
+# Environment variables files
+.env
+.env.local
+.env.*.local
+
+# Temporary files or directories
+*.bak
+*.swp
