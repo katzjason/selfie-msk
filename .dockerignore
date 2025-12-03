@@ -26,9 +26,6 @@ coverage/
 *.test.js
 *.test.ts
 
-# NPM / Yarn lock files
-<!-- package-lock.json
-yarn.lock -->
 
 # Environment variables files
 .env
