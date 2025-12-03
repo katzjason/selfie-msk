@@ -48,7 +48,7 @@ export default function Home() {
             <div className="flex gap-4 pt-2 justify-start">
 
               {sexOptions.map((option) => (
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2" key={option}>
                 <input 
                   type="radio"
                   name="sex"
