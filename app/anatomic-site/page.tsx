@@ -1,6 +1,7 @@
 "use client";
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePatient } from '@/app/contexts/patient';
 
 const anatomicSites : string[] = [
   "Head/Neck",
@@ -15,21 +16,20 @@ const anatomicSites : string[] = [
 
 export default function AnatomicSite() {
     const router = useRouter();
-    const [anatomicSite, setAnatomicSite] = useState("");
+    const {
+      anatomicSite,
+      setAnatomicSite
+    } = usePatient();
   
-    // load stored age and sex on first render
-    // useEffect(() => {
-    //   const storedAge = localStorage.getItem(STORED_AGE_KEY);
-    //   if (storedAge) setAge(storedAge);
-    //   const storedSex = localStorage.getItem(STORED_SEX_KEY);
-    //   if (storedSex) setSex(storedSex);
-    // }, [] );
+    // load stored anatomic site on first render
+    useEffect(() => {
+      setAnatomicSite(localStorage.getItem("anatomicSite") || "");
+    }, [] );
   
     function handleNext(e: React.FormEvent){
       e.preventDefault();
       if (anatomicSite !== "") {
-        // window.localStorage.setItem(STORED_AGE_KEY, age);  
-        // window.localStorage.setItem(STORED_SEX_KEY, sex);
+        window.localStorage.setItem("anatomicSite", anatomicSite);
         router.push('/capture');
       }
     }

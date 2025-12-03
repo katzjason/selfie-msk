@@ -1,29 +1,31 @@
 "use client";
-import Link from 'next/link';
-import {  useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePatient } from '@/app/contexts/patient';
 
-const STORED_AGE_KEY = "patient_age";
-const STORED_SEX_KEY = "patient_sex";
 
 export default function Home() {
-  const router = useRouter();
-  const [age, setAge] = useState("");
-  const [sex, setSex] = useState("");
+  const {
+    age,
+    setAge,
+    sex,
+    setSex,
+  } = usePatient();
 
-  // load stored age and sex on first render
-  // useEffect(() => {
-  //   const storedAge = localStorage.getItem(STORED_AGE_KEY);
-  //   if (storedAge) setAge(storedAge);
-  //   const storedSex = localStorage.getItem(STORED_SEX_KEY);
-  //   if (storedSex) setSex(storedSex);
-  // }, [] );
+  const router = useRouter();
+
+  const sexOptions : string[] = ["Male", "Female"];
+
+  useEffect(() => { // load stored  age and sex on first render
+    setAge(localStorage.getItem("age") || "");
+    setSex(localStorage.getItem("sex") || "");
+  }, [] );
 
   function handleNext(e: React.FormEvent){
     e.preventDefault();
     if (age !== "" && sex !== "") {
-      window.localStorage.setItem(STORED_AGE_KEY, age);  
-      window.localStorage.setItem(STORED_SEX_KEY, sex);
+      window.localStorage.setItem("age", age);  // updating browser storage for persistance across sessions
+      window.localStorage.setItem("sex", sex);
       router.push('/diagnosis');
     }
   }
@@ -32,7 +34,6 @@ export default function Home() {
     <div className="flex flex-col bg-white h-screen">
       <form onSubmit={handleNext} className="flex flex-col h-4/5">
         <main className="flex-1 flex flex-col p-8 w-full max-w-md mx-auto">
-
           <label className="block text-black">
             <div className="block mb-1 font-bold">Patient Age</div>
             <input 
@@ -45,33 +46,25 @@ export default function Home() {
           <div className="text-black mt-4">
             <div className="block mb-1 pt-4 font-bold">Patient Sex</div>
             <div className="flex gap-4 pt-2 justify-start">
-              <label className="flex items-center gap-2">
-                <input 
-                  type="radio"
-                  name="sex"
-                  value="Male"
-                  className="accent-black w-4 h-4"
-                  checked={sex==="Male"}
-                  onChange={() => setSex("Male")}
-                />
-                <div>Male</div>
-              </label>
 
-              <label className="flex items-center gap-2 accent-black">
+              {sexOptions.map((option) => (
+                <label className="flex items-center gap-2">
                 <input 
                   type="radio"
                   name="sex"
-                  value="Female"
+                  value={option}
                   className="accent-black w-4 h-4"
-                  checked={sex==="Female"}
-                  onChange={() => setSex("Female")}
+                  checked={sex===option}
+                  onChange={() => setSex(option)}
                 />
-                <div>Female</div>
+                <div>{option}</div>
               </label>
+              ))}
+
             </div>
           </div>
-          
         </main>
+
         <footer>
           <div className="w-full max-w-md mx-auto p-8 flex justify-center">
             <button type="submit" 
@@ -79,7 +72,6 @@ export default function Home() {
                 ${age !== "" && sex !== "" ? "opacity-100" : "opacity-25"} bg-gray-300 text-black font-semibold`}
               onClick={handleNext}>
               Next
-              
             </button>
           </div>
         </footer>

@@ -1,27 +1,47 @@
 "use client";
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePatient } from '@/app/contexts/patient';
 
 export default function Diagnosis() {
-  const router = useRouter();
-  const [diagnosis, setDiagnosis] = useState("");
-  //const [sex, setSex] = useState("");
 
-  // load stored age and sex on first render
-  // useEffect(() => {
-  //   const storedAge = localStorage.getItem(STORED_AGE_KEY);
-  //   if (storedAge) setAge(storedAge);
-  //   const storedSex = localStorage.getItem(STORED_SEX_KEY);
-  //   if (storedSex) setSex(storedSex);
-  // }, [] );
+  const diagnosisOptions : string[] = ["Benign", "Biopsy"];
+  const clinicalDiagnosisOptions : string[] = ["Benign", "Malignant"];
+
+  const {
+      mrn,
+      setMrn,
+      lesionID,
+      setLesionID,
+      diagnosis,
+      setDiagnosis,
+      clinicalDiagnosis,
+      setClinicalDiagnosis,
+    } = usePatient();
+
+  const router = useRouter();
+
+  // load stored diagnosis, MRN, lesionID, clinicalDiagnosis on first render
+  useEffect(() => {
+    setDiagnosis(localStorage.getItem("diagnosis") || "");
+    setMrn(localStorage.getItem("mrn") || "");
+    setLesionID(localStorage.getItem("lesionID") || "");
+    setClinicalDiagnosis(localStorage.getItem("clinicalDiagnosis") || "");
+  }, []);
 
   function handleNext(e: React.FormEvent){
     e.preventDefault();
-    if (diagnosis !== "") {
-      // window.localStorage.setItem(STORED_AGE_KEY, age);  
-      // window.localStorage.setItem(STORED_SEX_KEY, sex);
-      router.push('/anatomic-site');
+    if (diagnosis == "Benign") {
+      window.localStorage.setItem("mrn", "");  
+      window.localStorage.setItem("lesionID", "");
+      window.localStorage.setItem("clinicalDiagnosis", "");
+    } else {
+      window.localStorage.setItem("mrn", mrn);  
+      window.localStorage.setItem("lesionID", lesionID);
+      window.localStorage.setItem("clinicalDiagnosis", clinicalDiagnosis);
     }
+      window.localStorage.setItem("diagnosis", diagnosis);
+      router.push('/anatomic-site');
   }
  
   return (
@@ -32,29 +52,20 @@ export default function Diagnosis() {
           <div className="text-black">
             <div className="block mb-1 font-bold">Diagnosis</div>
             <div className="flex gap-4 pt-2 justify-start">
-              <label className="flex items-center gap-2">
-                <input 
-                  type="radio"
-                  name="diagnosis"
-                  value="Benign"
-                  className="accent-black w-4 h-4"
-                  checked={diagnosis==="Benign"}
-                  onChange={() => setDiagnosis("Benign")}
-                />
-                <div>Benign</div>
-              </label>
 
-              <label className="flex items-center gap-2 accent-black">
-                <input 
-                  type="radio"
-                  name="diagnosis"
-                  value="Biopsy"
+              {diagnosisOptions.map(option => (
+                <label key={option} className="flex items-center gap-2">
+                  <input 
+                    type="radio"
+                    name="diagnosis"
+                    value={option}
                   className="accent-black w-4 h-4"
-                  checked={diagnosis==="Biopsy"}
-                  onChange={() => setDiagnosis("Biopsy")}
+                  checked={diagnosis===option}
+                  onChange={() => setDiagnosis(option)}
                 />
-                <div>Biopsy</div>
-              </label>
+                <div>{option}</div>
+               </label>
+              ))}
             </div>
 
             {diagnosis === "Biopsy" && 
@@ -78,27 +89,21 @@ export default function Diagnosis() {
                 </label>
 
                 <div className="block mb-1 font-bold pt-4">Clinical Diagnosis</div>
-                <label className="flex items-center gap-2 accent-black">
+                <div className="flex flex-row gap-4">
+                {clinicalDiagnosisOptions.map(option => (
+                <label key={option} className="flex items-center gap-2">
                   <input 
                     type="radio"
                     name="clinical-diagnosis"
-                    value="Benign"
-                    className="accent-black w-4 h-4"
-                    checked={diagnosis==="Biopsy"}
-                    onChange={() => console.log("hi")}
-                  />
-                  <div>Benign</div>
-
-                  <input 
-                    type="radio"
-                    name="clinical-diagnosis"
-                    value="Malignant"
-                    className="accent-black w-4 h-4"
-                    checked={diagnosis==="Biopsy"}
-                    onChange={() => console.log("hi")}
-                  />
-                  <div>Malignant</div>
-              </label>
+                    value={option}
+                  className="accent-black w-4 h-4"
+                  checked={clinicalDiagnosis===option}
+                  onChange={() => setClinicalDiagnosis(option)}
+                />
+                <div>{option}</div>
+               </label>
+              ))}
+              </div>
               </div>
             }
           </div>
@@ -111,7 +116,6 @@ export default function Diagnosis() {
                 ${diagnosis !== "" ? "opacity-100" : "opacity-25"} bg-gray-300 text-black font-semibold`}
               onClick={handleNext}>
               Next
-              
             </button>
           </div>
         </footer>
