@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePatient } from '@/app/contexts/patient';
+import FooterButtons from '../components/footer-buttons';
 
 const anatomicSites : string[] = [
   "Head/Neck",
@@ -59,7 +60,7 @@ export default function AnatomicSite() {
             </div>
             
           </main>
-          <footer>
+          {/* <footer>
             <div className="w-full max-w-md mx-auto p-8 flex justify-center">
               <button type="submit" 
                 className={`w-1/2 px-4 py-3 rounded 
@@ -68,7 +69,11 @@ export default function AnatomicSite() {
                 Next
               </button>
             </div>
-          </footer>
+          </footer> */}
+          <FooterButtons activateNext={anatomicSite !== ""} showBack={true} showNext={true} handleNext={handleNext} handleBack={(e) => {
+            e.preventDefault();
+            router.back();
+          }} />
         </form>
       </div>
     );

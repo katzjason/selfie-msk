@@ -2,6 +2,9 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePatient } from '@/app/contexts/patient';
+import FitzpatrickCarousel from '@/app/components/fitzpatrick-carousel';
+import FooterButtons from '@/app/components/footer-buttons';
+import Details from '@/app/components/details';
 
 
 export default function Home() {
@@ -32,6 +35,7 @@ export default function Home() {
  
   return (
     <div className="flex flex-col bg-white h-screen">
+      <Details />
       <form onSubmit={handleNext} className="flex flex-col h-4/5">
         <main className="flex-1 flex flex-col p-8 w-full max-w-md mx-auto">
           <label className="block text-black">
@@ -60,21 +64,19 @@ export default function Home() {
                 <div>{option}</div>
               </label>
               ))}
-
             </div>
           </div>
-        </main>
 
-        <footer>
-          <div className="w-full max-w-md mx-auto p-8 flex justify-center">
-            <button type="submit" 
-              className={`w-1/2 px-4 py-3 rounded 
-                ${age !== "" && sex !== "" ? "opacity-100" : "opacity-25"} bg-gray-300 text-black font-semibold`}
-              onClick={handleNext}>
-              Next
-            </button>
+          <div className="text-black mt-4">
+            <div className="block mb-1 pt-4 font-bold">Fitzpatrick Scale</div>
+            <div className="flex gap-4 pt-2 justify-start">
+              <FitzpatrickCarousel />
+            </div>
           </div>
-        </footer>
+          
+          
+        </main>
+        <FooterButtons activateNext={age !== "" && sex !== ""} showBack={false} showNext={true}handleNext={handleNext} handleBack={() => {}} />        
       </form>
     </div>
   );

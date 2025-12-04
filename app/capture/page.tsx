@@ -2,9 +2,12 @@
 import { useRef, useState } from "react";
 import Gallery from "@/app/capture/gallery";
 import { Image } from "@/app/capture/image-type";
+import { useRouter } from "next/dist/client/components/navigation";
+import FooterButtons from '../components/footer-buttons';
+
 
 export default function Capture() {
-
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [images, setImages] = useState<Image[]>([]);
 
@@ -47,7 +50,7 @@ export default function Capture() {
 
           <p className="text-xs text-gray-500 text-center max-w-xs">
             You’ll be briefly taken to your camera.  
-            Zoom in so the lesion fills most of the frame, then take a clear photo.
+            Adjust so that the lesion is in focus, then take a clear photo.
           </p>
 
           <div className="mt-8 block mb-1 text-black font-bold">Photo Gallery</div>
@@ -56,6 +59,7 @@ export default function Capture() {
           <Gallery images={images}/>
         </div>
       </main>
+      <FooterButtons activateNext={false} showBack={true} showNext={false} handleNext={()=>{}} handleBack={(e) => {e.preventDefault(); router.back();}} />
     </div>
   );
 }

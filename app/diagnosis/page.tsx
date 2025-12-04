@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePatient } from '@/app/contexts/patient';
+import FooterButtons from '@/app/components/footer-buttons';
 
 export default function Diagnosis() {
 
@@ -109,7 +110,7 @@ export default function Diagnosis() {
           </div>
           
         </main>
-        <footer>
+        {/* <footer>
           <div className="w-full max-w-md mx-auto p-8 flex justify-center">
             <button type="submit" 
               className={`w-1/2 px-4 py-3 rounded 
@@ -118,8 +119,10 @@ export default function Diagnosis() {
               Next
             </button>
           </div>
-        </footer>
+        </footer> */}
+        <FooterButtons activateNext={diagnosis !== ""} showBack={true} showNext={true}handleNext={handleNext} handleBack={(e) => {e.preventDefault(); router.back();}} />
       </form>
+      
     </div>
   );
 }
