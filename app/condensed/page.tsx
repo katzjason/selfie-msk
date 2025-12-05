@@ -1,5 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Image } from "@/app/capture/image-type";
+import Gallery from "@/app/capture/gallery";
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface PatientData {
     age: number | null;
@@ -39,8 +42,31 @@ export default function Condensed() {
         anatomicSite: typeof window !== 'undefined' && window.localStorage.getItem("anatomicSite") ? window.localStorage.getItem("anatomicSite") as 'head' | 'trunk' | 'upper' | 'lower' | 'hand' | 'foot' : null,
     });
     const [hasMounted, setHasMounted] = useState(false);
+    const [images, setImages] = useState<Image[]>([]);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const [showDemographics, setShowDemographics] = useState(true);
 
     useEffect(() => { setHasMounted(true); }, []);
+
+    const handleCaptureButton = () => {
+        inputRef.current?.click();
+        setShowDemographics(false);
+    };
+
+    const handleCaptureInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+
+        setImages((prev) => [
+        ...prev,
+        { id: (`${Date.now()}-${Math.random()}`), url: url}
+        ]);
+
+        
+    };
+
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900 p-10">
@@ -50,58 +76,102 @@ export default function Condensed() {
                 <h2 className="text-xs text-white text-center">Streamlined lesion photography <br></br> for the MRA study</h2>
             </div>
 
-            {/* Form Grid */}
-            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
-                {/* Patient Age */}
-                <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Age</label>
-                <input
-                    type="number"
-                    value={formData.age !== null ? formData.age : ''}
-                    onChange={(e) => setFormData({ ...formData, age: e.target.value ? parseInt(e.target.value) : null })}
-                    placeholder="Enter patient age"
-                    className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                />
-                </div>
+            {/* Toggle Button */}
+            <div className="flex justify-center mb-5">
+                <button
+                onClick={() => setShowDemographics(true)}
+                className="bg-white shadow-lg rounded-b-lg px-6 py-2 hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2"
+                aria-label={showDemographics ? 'Collapse section' : 'Expand section'}
+                >
+                {!showDemographics && (
+                    <div className="flex flex-col text-black">
+                        <div className="flex flex-row items-center gap-2 w-full justify-center">
+                           <div>Age: {formData.age}</div>
+                            <div>Sex: {formData.sex}</div>
+                        </div>
+                        <div className="flex flex-row items-center gap-2 w-full justify-center">
+                            <div>Monk: {formData.monkSkinTone}</div>
+                            <div>MRN: {formData.mrn}</div>
+                        </div>
+                        
+                        <div className="flex flex-row">
+                            <>
+                            <ChevronDown className="w-5 h-5 text-black" />
+                            <span className="text-sm text-black font-medium">Edit Demographics</span>
+                            </>
+                        </div>
+                    </div>
+                    
+                )}
+                </button>
+            </div>
 
-                {/* Patient Sex */}
-                <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Sex</label>
-                    <div className="flex flex-row gap-4">
-                        {sexOptions.map((option) => (
-                            <label className="flex flex-row items-center gap-2 text-black" key={option}>
-                                <input 
-                                    type="radio"
-                                    name="sex"
-                                    value={option}
-                                    className="accent-gray-500 w-4 h-4"
-                                    checked={formData.sex == option}
-                                    onChange={(e) => setFormData({ ...formData, sex: e.target.value ? e.target.value as 'male' | 'female' | 'other' : null })}
-                                />
-                                <div>{option}</div>
-                            </label>
+            {/* Form Grid */}
+            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {showDemographics && (
+                <div className="grid grid-cols-1 gap-5">
+                    {/* Patient Age */}
+                    <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Age</label>
+                        <input
+                            type="number"
+                            value={formData.age !== null ? formData.age : ''}
+                            onChange={(e) => setFormData({ ...formData, age: e.target.value ? parseInt(e.target.value) : null })}
+                            placeholder="Enter patient age"
+                            className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                        />
+                    </div>
+
+                    {/* Patient Sex */}
+                    <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Sex</label>
+                        <div className="flex flex-row gap-4">
+                            {sexOptions.map((option) => (
+                                <label className="flex flex-row items-center gap-2 text-black" key={option}>
+                                    <input 
+                                        type="radio"
+                                        name="sex"
+                                        value={option}
+                                        className="accent-gray-500 w-4 h-4"
+                                        checked={formData.sex == option}
+                                        onChange={(e) => setFormData({ ...formData, sex: e.target.value ? e.target.value as 'male' | 'female' | 'other' : null })}
+                                    />
+                                    <div>{option}</div>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Monk Skin Type */}
+                    <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Monk Skin Tone</label>
+                        <select
+                            value={formData.monkSkinTone ?? ''}
+                            onChange={(e) => setFormData({ ...formData, monkSkinTone: e.target.value ? parseInt(e.target.value) : null })} // FIX ME
+                            className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        >
+                        <option value="">Select type...</option>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((type) => (
+                        <option key={type} value={type}>
+                            Type {type}
+                        </option>
                         ))}
+                        </select>
+                    </div>
+                
+                    {/* Patient MRN */}
+                    <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">MRN</label>
+                        <input
+                            type="number"
+                            value={formData.mrn !== null ? formData.mrn : ''}
+                            onChange={(e) => setFormData({ ...formData, mrn: e.target.value ? parseInt(e.target.value) : null })}
+                            placeholder="Enter patient MRN"
+                            className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                        />
                     </div>
                 </div>
-            </div>
-
-            {/* Monk Skin Type */}
-            {<div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 mb-5 text-black">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Monk Skin Tone</label>
-                <select
-                    value={formData.monkSkinTone ?? ''}
-                    onChange={(e) => setFormData({ ...formData, monkSkinTone: e.target.value ? parseInt(e.target.value) : null })} // FIX ME
-                    className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
-                >
-                <option value="">Select type...</option>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((type) => (
-                <option key={type} value={type}>
-                    Type {type}
-                </option>
-                ))}
-                </select>
-            </div>
-            }
+            )}
 
             {/* Diagnosis */}
             <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
@@ -126,18 +196,7 @@ export default function Condensed() {
             {/* Conditional Fields for Biopsy Diagnosis */}
             {hasMounted && formData.diagnosis?.toLowerCase() === "biopsy" && (
             <div className="gap-4">
-                <div className="bg-white rounded-xl mt-5 p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">MRN</label>
-                    <input
-                        type="number"
-                        value={formData.mrn !== null ? formData.mrn : ''}
-                        onChange={(e) => setFormData({ ...formData, mrn: e.target.value ? parseInt(e.target.value) : null })}
-                        placeholder="Enter patient MRN"
-                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                    />
-                </div>
-
-                <div className="bg-white rounded-xl mt-5 p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Lesion ID</label>
                     <input
                         type="number"
@@ -158,8 +217,10 @@ export default function Condensed() {
                         className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                     />
                 </div> */}
+            </div>
+            )}
 
-                <div className="bg-white rounded-xl mt-5 p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Anatomic Site</label>
 
                     <select
@@ -174,29 +235,30 @@ export default function Condensed() {
                     ))}
                     </select>
                 </div>
-            </div>
-            )}
 
-            {/* Capture Button */}
+            {/* Take Photos Button */}
             <div className="flex justify-center w-full mt-5">
                 <div className="w-1/2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col items-center">
-                    <button className="block text-sm font-semibold text-white uppercase tracking-wide">Take Photos</button>
+                    <button
+                        type="button"   
+                        className="block text-sm font-semibold text-white uppercase tracking-wide"
+                        onClick={handleCaptureButton}
+                    >
+                    Take Photos
+                    </button>
+                    <input
+                        ref={inputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment" // rear camera on most phones
+                       // multiple
+                        onChange={handleCaptureInput}
+                        style={{ display: "none" }}
+                    />
                 </div>
             </div>
-       
-
-
-       {/* Submit Button */}
-       {/* <div className="max-w-5xl mx-auto">
-    //     <button
-    //       onClick={() => {}}
-    //       className="w-full bg-white text-purple-600 py-4 px-6 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 hover:bg-gray-50"
-    //     >
-    //       Save Patient Data
-    //     </button>
-    //   </div>
-    // </div> */}
-
+            <Gallery images={images} />
+        </div>
     </div>
   );
 }
