@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Image } from "@/app/capture/image-type";
 import Gallery from "@/app/capture/gallery";
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import ImageGroup from '../capture/image-group';
 
 interface PatientData {
     age: number | null;
@@ -257,7 +258,9 @@ export default function Condensed() {
                     />
                 </div>
             </div>
-            <Gallery images={images} />
+            {/* <Gallery images={images} /> */}
+            <ImageGroup />
+            <p>TEST</p>
         </div>
     </div>
   );

@@ -17,5 +17,4 @@ export default function Gallery( { images }: {images: Image[]} ) {
             )}
         </div>
     );
-
 }
