@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from "react";
 import Gallery from "@/app/capture/gallery";
-import { Image } from "@/app/capture/image-type";
+import { Image } from "@/app/capture/image-helpers";
 import { useRouter } from "next/dist/client/components/navigation";
 import FooterButtons from '../components/footer-buttons';
 

@@ -1,6 +1,6 @@
 "use client";
 // import { useRef, useState, useEffect } from "react";
-import { Image } from "@/app/capture/image-type";
+import { Image } from "@/app/capture/image-helpers";
 
 
 export default function Gallery( { images }: {images: Image[]} ) {

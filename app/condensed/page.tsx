@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { Image } from "@/app/capture/image-type";
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Image, groupImages } from "@/app/capture/image-helpers";
 import Gallery from "@/app/capture/gallery";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import ImageGroup from '../capture/image-group';
@@ -30,6 +30,7 @@ const anatomicSites : string[] = [
   "Oral/Genital"
 ];
 
+
 export default function Condensed() {   
     const [formData, setFormData] = useState<PatientData & { patientId: string }>({
         patientId: typeof window !== 'undefined' ? window.localStorage.getItem("patientId") || '' : '',
@@ -46,6 +47,8 @@ export default function Condensed() {
     const [images, setImages] = useState<Image[]>([]);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [showDemographics, setShowDemographics] = useState(true);
+    const imageGroups = useMemo( () => groupImages(images), [images]);
+
 
     useEffect(() => { setHasMounted(true); }, []);
 
@@ -61,10 +64,14 @@ export default function Condensed() {
 
         setImages((prev) => [
         ...prev,
-        { id: (`${Date.now()}-${Math.random()}`), url: url}
+            {   id: (`${Date.now()}-${Math.random()}`), 
+                url: url,
+                captureTime: new Date().toISOString(),
+                mrn: formData.mrn ? formData.mrn.toString() : undefined,
+                anatomicSite: formData.anatomicSite ? formData.anatomicSite : '',
+                lesionID: formData.lesionID ? formData.lesionID.toString() : undefined
+            }
         ]);
-
-        
     };
 
 
@@ -116,8 +123,19 @@ export default function Condensed() {
                         <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Age</label>
                         <input
                             type="number"
-                            value={formData.age !== null ? formData.age : ''}
-                            onChange={(e) => setFormData({ ...formData, age: e.target.value ? parseInt(e.target.value) : null })}
+                            value={Number.isNaN(formData.age) ? '' : formData.age ?? ''}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '')  {
+                                    setFormData({ ...formData, age: null });
+                                    return;
+                                }
+                                
+                                const num = Number(val);
+                                if (!Number.isNaN(num)) {
+                                    setFormData({ ...formData, age: num });
+                                }
+                            }}
                             placeholder="Enter patient age"
                             className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                         />
@@ -148,7 +166,7 @@ export default function Condensed() {
                         <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Monk Skin Tone</label>
                         <select
                             value={formData.monkSkinTone ?? ''}
-                            onChange={(e) => setFormData({ ...formData, monkSkinTone: e.target.value ? parseInt(e.target.value) : null })} // FIX ME
+                            onChange={(e) => setFormData({ ...formData, monkSkinTone: e.target.value ? parseInt(e.target.value) : null })}
                             className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
                         >
                         <option value="">Select type...</option>
@@ -259,9 +277,28 @@ export default function Condensed() {
                 </div>
             </div>
             {/* <Gallery images={images} /> */}
-            <ImageGroup />
-            <p>TEST</p>
+
+            {imageGroups.map( (group) => (
+                <ImageGroup key={group.id} images={group.images} mrn={group.mrn} anatomicSite={group.anatomicSite} lesionID={group.lesionID} />
+
+            ))}
+            {/* <ImageGroup images={images} /> */}
         </div>
     </div>
   );
 }
+
+
+// {sexOptions.map((option) => (
+//                                 <label className="flex flex-row items-center gap-2 text-black" key={option}>
+//                                     <input 
+//                                         type="radio"
+//                                         name="sex"
+//                                         value={option}
+//                                         className="accent-gray-500 w-4 h-4"
+//                                         checked={formData.sex == option}
+//                                         onChange={(e) => setFormData({ ...formData, sex: e.target.value ? e.target.value as 'male' | 'female' | 'other' : null })}
+//                                     />
+//                                     <div>{option}</div>
+//                                 </label>
+//                             ))}
