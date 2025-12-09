@@ -33,7 +33,7 @@ TODO:
 - Admin page for viewing all uploading images in the last X time period?
 - Confirmation before official upload
 - Hash MRN and serve non-protected patient data back
-- Web responsiveness
+- Desktop responsiveness
 
 DONE:
 - ~~Group photos by MRN/LesionID/AnatomicSite~~
@@ -44,3 +44,7 @@ DONE:
 -MEETING
 -New name for app
 -Working with Dr. Marghoob
+-Kivanc 3 models
+-Timeline?
+-Camera limitations
+-Button for selecting clinical vs dermoscopic?

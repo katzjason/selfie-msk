@@ -74,6 +74,13 @@ export default function CondensedPage() {
     };
 
 
+    const AddPhotoToGroup = (groupId: string) => {
+        //inputRef.current?.click();
+        handleCaptureButton();
+        handleCaptureInput;
+    }
+
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900 p-10">
@@ -248,7 +255,7 @@ export default function CondensedPage() {
                 </div>
             </div>
             {imageGroups.map( (group) => (
-                <ImageGroup key={group.id} images={group.images} mrn={group.mrn} anatomicSite={group.anatomicSite} lesionID={group.lesionID} />
+                <ImageGroup key={group.id} images={group.images} mrn={group.mrn} anatomicSite={group.anatomicSite} lesionID={group.lesionID} onAddPhoto={() => AddPhotoToGroup(group.id)} />
 
             ))}
         </div>
