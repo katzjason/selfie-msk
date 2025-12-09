@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { usePatient } from '@/app/contexts/patient';
 import FitzpatrickCarousel from '@/app/components/fitzpatrick-carousel';
 import FooterButtons from '@/app/components/footer-buttons';
-import Details from '@/app/components/details';
+import Details from '@/app/components/demographics-summary';
 
 
 export default function Home() {

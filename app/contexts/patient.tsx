@@ -6,6 +6,8 @@ const PatientContext = createContext({
     setAge: (age: string) => {},
     sex: "",
     setSex: (sex: string) => {},
+    monkSkinTone: "",
+    setMonkSkinTone: (monkSkinTone: string) => {},
     diagnosis: "",
     setDiagnosis: (diagnosis: string) => {},
     mrn: "",
@@ -21,6 +23,7 @@ const PatientContext = createContext({
 export default function PatientProvider({children} : {children: React.ReactNode}) {
     const [age, setAge] = useState("");
     const [sex, setSex] = useState("");
+    const [monkSkinTone, setMonkSkinTone] = useState("");
     const [diagnosis, setDiagnosis] = useState("");
     const [mrn, setMrn] = useState("");
     const [lesionID, setLesionID] = useState("");
@@ -33,6 +36,8 @@ export default function PatientProvider({children} : {children: React.ReactNode}
             setAge,
             sex,
             setSex,
+            monkSkinTone,
+            setMonkSkinTone,
             diagnosis,
             setDiagnosis,
             mrn,
