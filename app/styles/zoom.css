@@ -1,0 +1,43 @@
+
+
+/* Base reset so browser doesn't override */
+.slider-vertical {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  z-index: 20;
+}
+
+/***************
+ * WEBKIT (Chrome, Android, iOS)
+ ***************/
+.slider-vertical::-webkit-slider-runnable-track {
+  height: 6px;
+  background: #ffffff;
+  border-radius: 3px;
+}
+
+.slider-vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 30px;
+  width: 30px;
+  background: white;
+  border-radius: 50%;
+  margin-top: -12px;
+}
+
+/***************
+ * FIREFOX
+ ***************/
+.slider-vertical::-moz-range-track {
+  height: 6px;
+  background: #ffffff;
+  border-radius: 3px;
+}
+
+.slider-vertical::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  background: white;
+  border-radius: 50%;
+}

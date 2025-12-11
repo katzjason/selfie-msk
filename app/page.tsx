@@ -1,83 +1,367 @@
-"use client";
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+'use client';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePatient } from '@/app/contexts/patient';
-import FitzpatrickCarousel from '@/app/components/fitzpatrick-carousel';
-import FooterButtons from '@/app/components/footer-buttons';
-import Details from '@/app/components/demographics-summary';
+import { Image, groupImages } from "@/app/capture/image-helpers";
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import ImageGroup from './capture/image-group';
+import DemographicsSummary from '@/app/components/demographics-summary';
+import { useRouter } from 'next/navigation';
 
+// All patient data now comes from context
+
+const sexOptions = ['Male', 'Female', 'Other'];
+const diagnosisOptions : string[] = ["Benign", "Biopsy"];
+const clinicalDiagnosisOptions : string[] = ["Benign", "Malignant"];
+const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95+"]
+const anatomicSites : string[] = [
+  "Head/Neck",
+  "Upper Extremity",
+  "Lower Extremity",
+  "Anterior Torso",
+  "Lateral Torso",
+  "Posterior Torso",
+  "Palms/Soles",
+  "Oral/Genital"
+];
 
 export default function Home() {
+  const router = useRouter();
   const {
     age,
     setAge,
     sex,
     setSex,
+    monkSkinTone,
+    setMonkSkinTone,
+    diagnosis,
+    setDiagnosis,
+    mrn,
+    setMrn,
+    lesionID,
+    setLesionID,
+    clinicalDiagnosis,
+    setClinicalDiagnosis,
+    anatomicSite,
+    setAnatomicSite
   } = usePatient();
+  const [hasMounted, setHasMounted] = useState(false);
+  const [images, setImages] = useState<Image[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [showDemographics, setShowDemographics] = useState(true);
+  const imageGroups = useMemo( () => groupImages(images), [images]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mraStudy, setMraStudy] = useState(true);
 
-  const router = useRouter();
 
-  const sexOptions : string[] = ["Male", "Female"];
+  useEffect(() => { setHasMounted(true); }, []);
 
-  useEffect(() => { // load stored  age and sex on first render
-    setAge(localStorage.getItem("age") || "");
-    setSex(localStorage.getItem("sex") || "");
-  }, [] );
+  const handleCaptureButton = () => {
+      inputRef.current?.click();
+      setShowDemographics(false);
+  };
 
-  function handleNext(e: React.FormEvent){
-    e.preventDefault();
-    if (age !== "" && sex !== "") {
-      window.localStorage.setItem("age", age);  // updating browser storage for persistance across sessions
-      window.localStorage.setItem("sex", sex);
-      router.push('/diagnosis');
-    }
+  const handleCaptureInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+
+      setImages((prev) => [
+      ...prev,
+          {   id: (`${Date.now()}-${Math.random()}`), 
+              url: url,
+              captureTime: new Date().toISOString(),
+              mrn: mrn ? mrn.toString() : undefined,
+              anatomicSite: anatomicSite ? anatomicSite : '',
+              lesionID: lesionID ? lesionID.toString() : undefined
+          }
+      ]);
+  };
+
+
+  const AddPhotoToGroup = (groupId: string) => {
+      handleCaptureButton();
+      handleCaptureInput;
   }
- 
+
+
   return (
-    <div className="flex flex-col bg-white h-screen">
-      <Details />
-      <form onSubmit={handleNext} className="flex flex-col h-4/5">
-        <main className="flex-1 flex flex-col p-8 w-full max-w-md mx-auto">
-          <label className="block text-black">
-            <div className="block mb-1 font-bold">Patient Age</div>
-            <input 
-              className="border rounded px-3 py-2 w-full text-black"
-              onChange={(e) => setAge(e.target.value)}
-              placeholder="e.g. 45"
-            />
-          </label>
+      <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900">
 
-          <div className="text-black mt-4">
-            <div className="block mb-1 pt-4 font-bold">Patient Sex</div>
-            <div className="flex gap-4 pt-2 justify-start">
+        <div className="relative flex flex-row">
+            <button className="relative group flex"
+                onClick={() => setMenuOpen((prev) => !prev)}
+            >
+                <div className="relative flex overflow-hidden items-center justify-center rounded-full w-[72px] h-[72px]">
+                    <div className="flex flex-col justify-between w-[32px] h-[28px] relative">
+                        {/* Hamburger lines */}
+                        <div
+                        className={[
+                            "bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-full transform transition-all duration-300 origin-left",
+                            menuOpen ? "translate-x-10 opacity-0" : "translate-x-0 opacity-100",
+                        ].join(" ")}
+                        />
+                        <div
+                        className={[
+                            "bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-full rounded transform transition-all duration-300",
+                            menuOpen ? "translate-x-10 opacity-0 delay-75" : "translate-x-0 opacity-100 delay-75",
+                        ].join(" ")}
+                        />
+                        <div
+                        className={[
+                            "bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-full transform transition-all duration-300 origin-left",
+                            menuOpen ? "translate-x-10 opacity-0 delay-150" : "translate-x-0 opacity-100 delay-150",
+                        ].join(" ")}
+                        />
 
-              {sexOptions.map((option) => (
-                <label className="flex items-center gap-2" key={option}>
-                <input 
-                  type="radio"
-                  name="sex"
-                  value={option}
-                  className="accent-black w-4 h-4"
-                  checked={sex===option}
-                  onChange={() => setSex(option)}
-                />
-                <div>{option}</div>
-              </label>
-              ))}
+                        {/* X icon */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                        <div
+                            className={[
+                            "absolute bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-8 transform transition-all duration-500",
+                            menuOpen ? "rotate-45 opacity-100 delay-150" : "rotate-0 opacity-0",
+                            ].join(" ")}
+                        />
+                        <div
+                            className={[
+                            "absolute bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-8 transform transition-all duration-500",
+                            menuOpen ? "-rotate-45 opacity-100 delay-150" : "rotate-0 opacity-0",
+                            ].join(" ")}
+                        />
+                        </div>
+                    </div>
+                </div>
+            </button>
+
+            {/* Title */}
+            <div className="max-w-5xl mx-auto mb-8 absolute inset-3 pointer-events-none">
+                <h1 className="text-2xl font-extrabold uppercase bg-gradient-to-br from-yellow-200 to-pink-500 bg-clip-text text-transparent text-center">Selfie App</h1>
+                <h2 className="text-xs text-white text-center">Streamlined lesion photography</h2>
             </div>
+
+        </div>
+        
+
+          {/* Toggle Button */}
+          <div className="flex mb-5">
+              {!showDemographics && (
+                  <button
+                      onClick={() => setShowDemographics(true)}
+                      className="bg-white shadow-lg rounded-lg px-2 py-2 transition-colors duration-200 flex items-center gap-2 w-full"
+                      //aria-label={showDemographics ? 'Collapse section' : 'Expand section'}
+                      >
+                      {!showDemographics && (
+                          <DemographicsSummary />
+                      )}
+                      </button>
+              )}
           </div>
 
-          <div className="text-black mt-4">
-            <div className="block mb-1 pt-4 font-bold">Fitzpatrick Scale</div>
-            <div className="flex gap-4 pt-2 justify-start">
-              <FitzpatrickCarousel />
-            </div>
+          {/* Form Grid */}
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pl-10 pr-10">
+              {showDemographics && (
+              <div className="grid grid-cols-1 gap-5">
+                  {/* Patient Age */}
+                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Age</label>
+                      <select
+                          value={age ?? ''}
+                          onChange={(e) => setAge(e.target.value)}
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                      >
+                      <option value="">Select age range...</option>
+                      {ageOptions.map((option) => (
+                      <option key={option} value={option}>
+                          {option}
+                      </option>
+                      ))}
+                      </select>
+                      {/* <input
+                          type="text"
+                          inputMode="numeric"
+                          value={age ?? ''}
+                          onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '')  {
+                                  setAge("");
+                                  return;
+                              }
+                              setAge(val);
+                          }}
+                          placeholder="Enter patient age"
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                      /> */}
+                  </div>
+
+                  {/* Patient Sex */}
+                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Sex</label>
+                      <div className="flex flex-row gap-4">
+                          {sexOptions.map((option) => (
+                              <label className="flex flex-row items-center gap-2 text-black" key={option}>
+                                  <input 
+                                      type="radio"
+                                      name="sex"
+                                      value={option}
+                                      className="accent-gray-500 w-4 h-4"
+                                      checked={sex === option}
+                                      onChange={() => setSex(option)}
+                                  />
+                                  <div>{option}</div>
+                              </label>
+                          ))}
+                      </div>
+                  </div>
+
+                  {/* Monk Skin Type */}
+                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Monk Skin Tone</label>
+                      <select
+                          value={monkSkinTone ?? ''}
+                          onChange={(e) => setMonkSkinTone(e.target.value)}
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                      >
+                      <option value="">Select type...</option>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((type) => (
+                      <option key={type} value={type}>
+                          Type {type}
+                      </option>
+                      ))}
+                      </select>
+                  </div>
+              
+                  {/* Patient MRN */}
+                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">MRN</label>
+                      <input
+                          type="text"
+                          inputMode="numeric"
+                          value={mrn ?? ''}
+                          onChange={(e) => setMrn(e.target.value)}
+                          placeholder="Enter patient MRN"
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                      />
+                  </div>
+              </div>
+          )}
+
+          {/* Diagnosis */}
+          <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Diagnosis</label>
+              <div className="flex gap-4 mt-2">
+                  {diagnosisOptions.map(option => (
+                  <label key={option} className="flex items-center gap-2 text-black">
+                  <input 
+                      type="radio"
+                      name="diagnosis"
+                      value={option}
+                  className="accent-gray-500 w-4 h-4"
+                  checked={diagnosis === option}
+                  onChange={() => setDiagnosis(option)}
+                  />
+                  <div>{option}</div>
+                  </label>
+                  ))}
+              </div>
           </div>
+
+          {/* Conditional Fields for Biopsy Diagnosis */}
+          {hasMounted && diagnosis?.toLowerCase() === "biopsy" && (
+          <div className="gap-4">
+              <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Lesion ID</label>
+                  <input
+                      type="text"
+                      inputMode="numeric"
+                      value={lesionID ?? ''}
+                      onChange={(e) => setLesionID(e.target.value)}
+                      placeholder="Enter patient lesion ID"
+                      className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                  />
+              </div>
+          </div>
+          )}
+
+          <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Anatomic Site</label>
+
+                  <select
+                      value={anatomicSite ?? ''}
+                      onChange={(e) => setAnatomicSite(e.target.value)}
+                      className="w-full text-black px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                  >
+                  {anatomicSites.map((option) => (
+                  <option key={option} value={option}>
+                      {option}
+                  </option>
+                  ))}
+                  </select>
+              </div>
+
+          {/* Take Photos Button */}
+          <div className="flex justify-center w-full mt-5">
+              <div className="w-1/2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col items-center">
+                  {/* <button
+                    type="button"
+                    className="block text-sm font-semibold text-white uppercase tracking-wide"
+                    onClick={() =>router.push('capture')}
+                  >Take Photos</button> */}
+                  <button
+                      type="button"   
+                      className="block text-sm font-semibold text-white uppercase tracking-wide"
+                      onClick={handleCaptureButton}
+                  >
+                  Take Photos
+                  </button>
+                  <input
+                      ref={inputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment" // rear camera on most phones
+                      onChange={handleCaptureInput}
+                      style={{ display: "none" }}
+                  />
+              </div>
+          </div>
+          {imageGroups.map( (group) => (
+              <ImageGroup key={group.id} images={group.images} mrn={group.mrn} anatomicSite={group.anatomicSite} lesionID={group.lesionID} onAddPhoto={() => AddPhotoToGroup(group.id)} />
+
+          ))}
           
-          
-        </main>
-        <FooterButtons activateNext={age !== "" && sex !== ""} showBack={false} showNext={true}handleNext={handleNext} handleBack={() => {}} />        
-      </form>
-    </div>
-  );
+          {/* Sidebar overlay */}
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 bg-black/40 z-40"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close sidebar overlay"
+              />
+              <aside className="fixed top-0 left-0 h-full w-64 bg-gradient-to-br from-gray-200 to-gray-500 shadow-lg z-50 flex flex-col p-6 transition-transform duration-300">
+                <nav className="flex flex-col gap-4 items-start">
+                    <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                        <button 
+                            className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
+                            onClick={() => {
+                                setMraStudy(true);
+                                setMenuOpen(false);
+                            }}
+                        >MRA Study
+                        </button>
+                    </div>
+                    <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                        <button 
+                            className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
+                            onClick={() => {
+                                setMraStudy(false);
+                                setMenuOpen(false);
+                            }}
+                        >Marghoob
+                        </button>
+                    </div>
+                </nav>
+              </aside>
+            </>
+          )}
+      </div>
+  </div>
+);
 }

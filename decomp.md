@@ -1,9 +1,11 @@
 # Selfie App Decomposition
 Author:  Jason Katz <br>
-Last Updated: 12/9/2025
+Last Updated: 12/10/2025
+
 
 ## Project Goals
 - Faciliate the collection of 100k far-away/dermoscopy images for the Melanoma Research Alliance (MRA) grant due EOY 2027.
+- **Barcelona Due Date: 1/1/2026**
 
 
 ## Selfie App User Workflow
@@ -20,10 +22,13 @@ Last Updated: 12/9/2025
 
 
 TODO:
+- Have Dr. Marghoob come up with a new name for the app
+- Grab diagnosis list from the 2019 challenge, but be ready to supplement
+- Ask Nick about pathology report diagnoses options
+- Opimize age/sex vs MRN for benign/biopsy
 - Create local database
 - Integrate database connection
 - Finalized workflow for uploading images (when in the process does this occur?)
-- (+) button to add images to a specific group?
 - Preventing photo loss on refresh/different sessions
 - Monk scale UI
 - Anatomic Site Mannequin
@@ -34,17 +39,40 @@ TODO:
 - Confirmation before official upload
 - Hash MRN and serve non-protected patient data back
 - Desktop responsiveness
+- Handle long MRNs/data in summary/gallery
+- Tinker with Canfield attachment
+- Instant Zoom
+- Focus
+- Capture page scroll issue
+- Age 5 year buckets
 
 DONE:
-- ~~Group photos by MRN/LesionID/AnatomicSite~~
-- ~~Make expand section look better~~
-- ~~Make gallery data look better~~
+- ~~Embedded camera~~
+
+## Outstanding Questions
+- AWS Issues
+- Admin Page
+- Multiple versions of the app?
+- Auth?
+- Canfield automatic toggle limitations (according to Sam)
 
 
--MEETING
--New name for app
--Working with Dr. Marghoob
--Kivanc 3 models
--Timeline?
--Camera limitations
--Button for selecting clinical vs dermoscopic?
+http://172.28.37.105:3000
+
+
+## Marghoob Study
+- No need to biopsy -- they are all benign
+- Diagnosis will be based on clinical/dermoscopic visual analysis
+- Name, Date, MRN, DOB, Sex, Fitzpatrick Skin Type, ITA values, Monk Scale, Self-reported race
+- Overview photo taken
+- Then 4 images: contact vs. non-contact, polarized vs non-polarized
+- Then UV images taken
+- Want to access images from a website linked to the app
+- Avatar to connect lesion to body site
+- What to do if other site doesn't have vectra or a lesion ID?
+- Miami equipment?
+
+## Sites
+- Miami/Texas for Marghoob study
+- MSK? (MRA)
+- Barcelona
