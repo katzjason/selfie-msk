@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import ImageGroup from './capture/image-group';
 import DemographicsSummary from '@/app/components/demographics-summary';
 import { useRouter } from 'next/navigation';
+import FormField from '@/app/components/form-field';
 
 // All patient data now comes from context
 
@@ -13,6 +14,9 @@ const sexOptions = ['Male', 'Female', 'Other'];
 const diagnosisOptions : string[] = ["Benign", "Biopsy"];
 const clinicalDiagnosisOptions : string[] = ["Benign", "Malignant"];
 const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95+"]
+const mraDiagnoses : string[] = ["Melanoma", "Melanocytic nevus", "Basal cell carcinoma", "Actinic keratosis", "Benign keratosis (solar lentigo / seborrheic keratosis / lichen planus-like keratosis)",
+    "Dermatofibroma", "Vascular lesion", "Squamous cell carcinoma", "Other"];
+const raceOptions : string[] = ["American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Two or More Races", "Other", "Prefer not to answer"];
 const anatomicSites : string[] = [
   "Head/Neck",
   "Upper Extremity",
@@ -27,23 +31,21 @@ const anatomicSites : string[] = [
 export default function Home() {
   const router = useRouter();
   const {
-    age,
-    setAge,
-    sex,
-    setSex,
-    monkSkinTone,
-    setMonkSkinTone,
-    diagnosis,
-    setDiagnosis,
-    mrn,
-    setMrn,
-    lesionID,
-    setLesionID,
-    clinicalDiagnosis,
-    setClinicalDiagnosis,
-    anatomicSite,
-    setAnatomicSite
+    name, setName,
+    dob, setDob,
+    age, setAge,
+    sex, setSex,
+    fitzpatrick, setFitzpatrick,
+    race, setRace,
+    ita, setIta,
+    monkSkinTone, setMonkSkinTone,
+    diagnosis, setDiagnosis,
+    mrn, setMrn,
+    lesionID, setLesionID,
+    clinicalDiagnosis, setClinicalDiagnosis,
+    anatomicSite, setAnatomicSite
   } = usePatient();
+
   const [hasMounted, setHasMounted] = useState(false);
   const [images, setImages] = useState<Image[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -156,46 +158,73 @@ export default function Home() {
               )}
           </div>
 
-          {/* Form Grid */}
-          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pl-10 pr-10">
-              {showDemographics && (
-              <div className="grid grid-cols-1 gap-5">
-                  {/* Patient Age */}
-                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
-                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Age</label>
-                      <select
-                          value={age ?? ''}
-                          onChange={(e) => setAge(e.target.value)}
-                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
-                      >
-                      <option value="">Select age range...</option>
-                      {ageOptions.map((option) => (
-                      <option key={option} value={option}>
-                          {option}
-                      </option>
-                      ))}
-                      </select>
-                      {/* <input
+        {/* Form Grid */}
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pl-10 pr-10">
+            {showDemographics && (
+            <div className="grid grid-cols-1 gap-5">
+
+                {!mraStudy && (<FormField label="Patient Name"
+                    children={
+                        <input
                           type="text"
                           inputMode="numeric"
-                          value={age ?? ''}
-                          onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === '')  {
-                                  setAge("");
-                                  return;
-                              }
-                              setAge(val);
-                          }}
-                          placeholder="Enter patient age"
+                          value={name ?? ''}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Enter patient name"
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                      /> */}
-                  </div>
+                      />
+                    }
+                ></FormField>)}
 
-                  {/* Patient Sex */}
-                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Sex</label>
-                      <div className="flex flex-row gap-4">
+                {!mraStudy && (<FormField label="Date of Birth"
+                    children={
+                        <input
+                          type="date"
+                          inputMode="numeric"
+                          value={dob ?? ''}
+                          onChange={(e) => setDob(e.target.value)}
+                          placeholder="Enter date of birth"
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                      />
+                    }
+                ></FormField>)}
+
+                {mraStudy && (<FormField label="Age"
+                    children={
+                        <select
+                            value={age ?? ''}
+                            onChange={(e) => setAge(e.target.value)}
+                            className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        >
+                        <option value="">Select age range...</option>
+                        {ageOptions.map((option) => (
+                        <option key={option} value={option}>
+                            {option}
+                        </option>
+                        ))}
+                        </select>
+                    }
+                ></FormField>)}
+                    {/* <input
+                        type="text"
+                        inputMode="numeric"
+                        value={age ?? ''}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '')  {
+                                setAge("");
+                                return;
+                            }
+                            setAge(val);
+                        }}
+                        placeholder="Enter patient age"
+                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                    /> */}
+                {/* </div> */}
+
+                <FormField label="Sex"
+                    children={
+                        <div className="flex flex-row gap-4">
                           {sexOptions.map((option) => (
                               <label className="flex flex-row items-center gap-2 text-black" key={option}>
                                   <input 
@@ -210,29 +239,57 @@ export default function Home() {
                               </label>
                           ))}
                       </div>
-                  </div>
+                    }
+                ></FormField>
 
-                  {/* Monk Skin Type */}
-                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
-                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Monk Skin Tone</label>
-                      <select
+                {!mraStudy && (<FormField label="Fitzpatrick Skin Type"
+                    children={
+                        <select
+                          value={fitzpatrick ?? ''}
+                          onChange={(e) => setFitzpatrick(e.target.value)}
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        >
+                        <option value="">Select type...</option>
+                        {["I", "II", "III", "IV", "V", "VI"].map((type) => (
+                        <option key={type} value={type}>Type {type}</option>
+                        ))}
+                        </select>
+                        }
+                ></FormField>)}
+
+                {!mraStudy && (<FormField label="ITA Scale"
+                    children={
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={ita ?? ''}
+                          onChange={(e) => setIta(e.target.value)}
+                          placeholder="Enter ITA value"
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                        />
+                        }
+                ></FormField>)}
+
+                <FormField label="Monk Skin Tone"
+                    children={
+                        <select
                           value={monkSkinTone ?? ''}
                           onChange={(e) => setMonkSkinTone(e.target.value)}
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
-                      >
-                      <option value="">Select type...</option>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((type) => (
-                      <option key={type} value={type}>
-                          Type {type}
-                      </option>
-                      ))}
-                      </select>
-                  </div>
-              
-                  {/* Patient MRN */}
-                  <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">MRN</label>
-                      <input
+                        >
+                        <option value="">Select type...</option>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((type) => (
+                        <option key={type} value={type}>
+                            Type {type}
+                        </option>
+                        ))}
+                        </select>
+                    }
+                ></FormField>
+
+                {true && (<FormField label="MRN"
+                    children={
+                        <input
                           type="text"
                           inputMode="numeric"
                           value={mrn ?? ''}
@@ -240,72 +297,83 @@ export default function Home() {
                           placeholder="Enter patient MRN"
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                       />
-                  </div>
-              </div>
-          )}
+                        }
+                ></FormField>)}
+            </div>
+            )}
 
-          {/* Diagnosis */}
-          <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Diagnosis</label>
-              <div className="flex gap-4 mt-2">
-                  {diagnosisOptions.map(option => (
-                  <label key={option} className="flex items-center gap-2 text-black">
-                  <input 
-                      type="radio"
-                      name="diagnosis"
-                      value={option}
-                  className="accent-gray-500 w-4 h-4"
-                  checked={diagnosis === option}
-                  onChange={() => setDiagnosis(option)}
-                  />
-                  <div>{option}</div>
-                  </label>
-                  ))}
-              </div>
-          </div>
+            {!mraStudy && (<FormField label="Self-reported Race"
+                    children={
+                        <select
+                          value={race ?? ''}
+                          onChange={(e) => setRace(e.target.value)}
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        >
+                        <option value="">Select self-reported race...</option>
+                        {raceOptions.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                        ))}
+                        </select>
+                    }
+                ></FormField>)}
 
-          {/* Conditional Fields for Biopsy Diagnosis */}
-          {hasMounted && diagnosis?.toLowerCase() === "biopsy" && (
-          <div className="gap-4">
-              <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Lesion ID</label>
-                  <input
-                      type="text"
-                      inputMode="numeric"
-                      value={lesionID ?? ''}
-                      onChange={(e) => setLesionID(e.target.value)}
-                      placeholder="Enter patient lesion ID"
-                      className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                  />
-              </div>
-          </div>
-          )}
+            {mraStudy && (<FormField label="Clinical Diagnosis"
+                children={
+                    <select
+                        value={clinicalDiagnosis ?? ''}
+                        onChange={(e) => setClinicalDiagnosis(e.target.value)}
+                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                    >
+                    <option value="">Select diagnosis...</option>
+                    {mraDiagnoses.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                    ))}
+                    </select>
+                }
+            ></FormField>)}
 
-          <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Anatomic Site</label>
+            {/* Conditional Fields for Biopsy Diagnosis */}
+            {/* {hasMounted && diagnosis?.toLowerCase() === "biopsy" &&  */}
+            {true && (<FormField label="Lesion ID"
+                    children={
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            value={lesionID ?? ''}
+                            onChange={(e) => setLesionID(e.target.value)}
+                            placeholder="Enter patient lesion ID"
+                            className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                        />
+                    }
+                ></FormField>)
+            }
 
-                  <select
-                      value={anatomicSite ?? ''}
-                      onChange={(e) => setAnatomicSite(e.target.value)}
-                      className="w-full text-black px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
-                  >
-                  {anatomicSites.map((option) => (
-                  <option key={option} value={option}>
-                      {option}
-                  </option>
-                  ))}
-                  </select>
-              </div>
+            <FormField label="Anatomic Site"
+                children={
+                    <select
+                        value={anatomicSite ?? ''}
+                        onChange={(e) => setAnatomicSite(e.target.value)}
+                        className="w-full text-black px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                    >
+                    {anatomicSites.map((option) => (
+                    <option key={option} value={option}>
+                        {option}
+                    </option>
+                    ))}
+                    </select>
+                    }
+            ></FormField>
+
 
           {/* Take Photos Button */}
           <div className="flex justify-center w-full mt-5">
               <div className="w-1/2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col items-center">
-                  {/* <button
+                  <button
                     type="button"
                     className="block text-sm font-semibold text-white uppercase tracking-wide"
                     onClick={() =>router.push('capture')}
-                  >Take Photos</button> */}
-                  <button
+                  >Take Photos</button>
+                  {/* <button
                       type="button"   
                       className="block text-sm font-semibold text-white uppercase tracking-wide"
                       onClick={handleCaptureButton}
@@ -319,7 +387,7 @@ export default function Home() {
                       capture="environment" // rear camera on most phones
                       onChange={handleCaptureInput}
                       style={{ display: "none" }}
-                  />
+                  /> */}
               </div>
           </div>
           {imageGroups.map( (group) => (

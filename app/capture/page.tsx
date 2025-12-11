@@ -14,7 +14,8 @@ export default function Capture() {
 
   const [zoomRange, setZoomRange] = useState<{min: number, max: number} | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
-  const [message, setMessage] = useState<string | null>("HEY");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
 
 
   const startCamera = async () => {
@@ -53,18 +54,22 @@ export default function Capture() {
   
 
   const initZoomCapabilities = () => {
-    const track = getVideoTrack();
+    try {
+      const track = getVideoTrack();
     if (!track) return;
 
     const capabilities = track.getCapabilities() as any;
     if (!capabilities){
-      setMessage("No capabilities found; Unable to zoom");
+      
     }
 
     setZoomRange({min: capabilities.zoom.min, max: capabilities.zoom.max});
     const currentSettings = track.getSettings() as any;
     setZoom(currentSettings.zoom || zoomRange?.min || 1);
-    setMessage("Min zoom: " + capabilities.zoom.min.toString() + " Max zoom: " + capabilities.zoom.max.toString());
+    } catch (err) {
+      console.log("Error initializing zoom capabilities:", err);
+    }
+    
   }
     
 
@@ -82,6 +87,21 @@ export default function Capture() {
       await track.applyConstraints(constraints);
     } catch (err) {
       console.log("Error applying zoom constraints:", err);
+    }
+  };
+
+  const handleCapture = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (video && canvas) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageDataUrl = canvas.toDataURL('image/png');
+        // Do something with imageDataUrl (e.g., save, upload, preview)
+      }
     }
   };
 
@@ -113,9 +133,9 @@ const goToPrevStep = () => {
 
 const photoSteps = [
   {
-    id: "overview",
-    title: "Overview photo",
-    description: "Capture the entire area surrounding the lesion.",
+    id: "closeup",
+    title: "Close-up Photo",
+    description: "Six inches away without any attachment.",
   },
   {
     id: "non-polarized-non-contact",
@@ -179,7 +199,7 @@ return (
             disabled={stepIndex === photoSteps.length - 1}
             className="px-2 py-1 text-xs rounded-md border border-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Next
+            Skip
           </button>
         </div>
       </div>
@@ -197,7 +217,10 @@ return (
             <CornerMarkers />
           </div>
           
-          <CaptureButton clickCallback={() => {}}/>
+          <CaptureButton clickCallback={() => {
+            goToNextStep();
+            handleCapture();
+          }}/>
         </div>
         
 

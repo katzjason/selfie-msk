@@ -18,9 +18,10 @@ export default function CaptureButton({clickCallback}: {clickCallback: () => voi
                 <button 
                     className="
                     absolute bottom-0.5 left-1/2 -translate-x-1/2
-                    bg-white text-black font-semibold
-                    rounded-full w-12 h-12 shadow-lg
+                    bg-white rounded-full w-12 h-12 shadow-lg
                     flex items-center justify-center
+                    transition-all duration-150
+                    active:scale-90 active:shadow-md
                     "
                     type="button"
                     onClick={clickCallback}
