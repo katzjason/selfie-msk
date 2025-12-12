@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - IMAGE_DIR=/data/images
+    volumes:
+      - selfie_images:/data/images
+
+volumes:
+  selfie_images:

@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState, useEffect } from "react";
-import { Image } from "@/app/capture/image-helpers";
+import { Image, dataUrlToBlob } from "@/app/capture/image-helpers";
 import { useRouter } from "next/dist/client/components/navigation";
 import FooterButtons from '../components/footer-buttons';
 import CaptureButton from '@/app/components/capture-button';
@@ -9,13 +9,11 @@ import CornerMarkers from '@/app/components/corner-markers';
 
 export default function Capture() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const trackRef = useRef<MediaStreamTrack | null>(null);
-
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [zoomRange, setZoomRange] = useState<{min: number, max: number} | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
 
 
   const startCamera = async () => {
@@ -38,11 +36,9 @@ export default function Capture() {
       //   initZoomCapabilities();
       // }, 0);
 
-
     } catch (err) {
       console.log("Error starting camera:",err);
     }
-
   }
 
   const getVideoTrack = () => {
@@ -56,12 +52,12 @@ export default function Capture() {
   const initZoomCapabilities = () => {
     try {
       const track = getVideoTrack();
-    if (!track) return;
+      if (!track) return;
 
-    const capabilities = track.getCapabilities() as any;
-    if (!capabilities){
-      
-    }
+      const capabilities = track.getCapabilities() as any;
+      if (!capabilities){
+        // ?
+      }
 
     setZoomRange({min: capabilities.zoom.min, max: capabilities.zoom.max});
     const currentSettings = track.getSettings() as any;
@@ -69,7 +65,6 @@ export default function Capture() {
     } catch (err) {
       console.log("Error initializing zoom capabilities:", err);
     }
-    
   }
     
 
@@ -90,20 +85,44 @@ export default function Capture() {
     }
   };
 
-  const handleCapture = () => {
+  async function uploadImage(blob: Blob) {
+    const form = new FormData();
+    form.append("file", blob, "capture.png");
+
+    const res = await fetch("/api/images", {
+      method: "POST",
+      body: form,
+    });
+
+    if (!res.ok) throw new Error("Upload failed");
+    return res.json(); // { id, filename, url }
+  }
+
+  const handleCapture = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (video && canvas) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
+      console.log("1");
       if (ctx) {
+        console.log("2");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageDataUrl = canvas.toDataURL('image/png');
+        // saving images to local storage
+        const images = JSON.parse(localStorage.getItem('capturedImages') || '[]');
+        images.push(imageDataUrl);
+        const blob = dataUrlToBlob(imageDataUrl); //  converting data URL to Blob
+        const { url } = await uploadImage(blob);
+        localStorage.setItem('capturedImages', JSON.stringify(images));
+        console.log(images);
         // Do something with imageDataUrl (e.g., save, upload, preview)
       }
     }
   };
+
+  
 
   useEffect(() => {
     startCamera();
@@ -168,9 +187,11 @@ const photoSteps = [
 const [stepIndex, setStepIndex] = useState(0);
 
 
-return (
-  <div className="flex flex-col min-h-[100dvh] pt-[env(safe-area-inset-top)] justify-center">
-    {!!stream && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center">
+  return (
+    <div className="flex flex-col min-h-[100dvh] pt-[env(safe-area-inset-top)] justify-center">
+      {/* Hidden canvas for image capture */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      {!!stream && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center">
       {/* Instruction bar at top */}
       <div className="mb-2 rounded-xl bg-black/70 text-white px-3 py-2 flex items-center justify-between">
         <div className="flex flex-col">

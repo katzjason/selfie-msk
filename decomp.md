@@ -23,7 +23,6 @@ Last Updated: 12/10/2025
 
 TODO:
 - Have Dr. Marghoob come up with a new name for the app
-- Grab diagnosis list from the 2019 challenge, but be ready to supplement
 - Ask Nick about pathology report diagnoses options
 - Opimize age/sex vs MRN for benign/biopsy
 - Create local database
@@ -43,11 +42,13 @@ TODO:
 - Tinker with Canfield attachment
 - Instant Zoom
 - Focus
-- Capture page scroll issue
-- Age 5 year buckets
+
+
 
 DONE:
-- ~~Embedded camera~~
+- ~~Age 5 year buckets~~
+- ~~Capture page scroll issue~~
+- ~~Grab diagnosis list from the 2019 challenge, but be ready to supplement~~
 
 ## Outstanding Questions
 - AWS Issues
@@ -76,3 +77,9 @@ http://172.28.37.105:3000
 - Miami/Texas for Marghoob study
 - MSK? (MRA)
 - Barcelona
+
+
+
+## Capture Workflow
+- Save image and metadata to temporary storage
+- Once complete with lesion => upload => back to home page => maybe a image history for memory?

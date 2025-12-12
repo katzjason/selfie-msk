@@ -47,10 +47,10 @@ export default function Home() {
   } = usePatient();
 
   const [hasMounted, setHasMounted] = useState(false);
-  const [images, setImages] = useState<Image[]>([]);
+  const [images, setImages] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [showDemographics, setShowDemographics] = useState(true);
-  const imageGroups = useMemo( () => groupImages(images), [images]);
+  //const imageGroups = useMemo( () => groupImages(images), [images]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mraStudy, setMraStudy] = useState(true);
 
@@ -67,16 +67,16 @@ export default function Home() {
       if (!file) return;
       const url = URL.createObjectURL(file);
 
-      setImages((prev) => [
-      ...prev,
-          {   id: (`${Date.now()}-${Math.random()}`), 
-              url: url,
-              captureTime: new Date().toISOString(),
-              mrn: mrn ? mrn.toString() : undefined,
-              anatomicSite: anatomicSite ? anatomicSite : '',
-              lesionID: lesionID ? lesionID.toString() : undefined
-          }
-      ]);
+    //   setImages((prev) => [
+    //   ...prev,
+    //       {   id: (`${Date.now()}-${Math.random()}`), 
+    //           url: url,
+    //           captureTime: new Date().toISOString(),
+    //           mrn: mrn ? mrn.toString() : undefined,
+    //           anatomicSite: anatomicSite ? anatomicSite : '',
+    //           lesionID: lesionID ? lesionID.toString() : undefined
+    //       }
+    //   ]);
   };
 
 
@@ -84,6 +84,11 @@ export default function Home() {
       handleCaptureButton();
       handleCaptureInput;
   }
+
+    useEffect(() => {
+    const imgs = JSON.parse(localStorage.getItem('capturedImages') || '[]');
+    setImages(imgs);
+    }, []);
 
 
   return (
@@ -364,6 +369,7 @@ export default function Home() {
                     }
             ></FormField>
 
+            {images.map((url, idx) => <img key={idx} src={url} alt={`Captured ${idx}`} />)}
 
           {/* Take Photos Button */}
           <div className="flex justify-center w-full mt-5">
@@ -390,10 +396,10 @@ export default function Home() {
                   /> */}
               </div>
           </div>
-          {imageGroups.map( (group) => (
+          {/* {imageGroups.map( (group) => (
               <ImageGroup key={group.id} images={group.images} mrn={group.mrn} anatomicSite={group.anatomicSite} lesionID={group.lesionID} onAddPhoto={() => AddPhotoToGroup(group.id)} />
 
-          ))}
+          ))} */}
           
           {/* Sidebar overlay */}
           {menuOpen && (

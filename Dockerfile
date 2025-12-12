@@ -25,10 +25,22 @@ WORKDIR /app
 # Set NODE_ENV for production
 ENV NODE_ENV=production
 
+ENV IMAGE_DIR=/data/images
+
+RUN apk add --no-cache su-exec
+RUN mkdir -p /data/images
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# copy your standalone output...
+# COPY --from=builder ...
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
 # Create a non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-USER nextjs
 
 # Copy essential files from the builder stage
 COPY --from=builder /app/public ./public
