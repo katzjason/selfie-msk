@@ -1,6 +1,6 @@
 # Selfie App Decomposition
 Author:  Jason Katz <br>
-Last Updated: 12/10/2025
+Last Updated: 12/15/2025
 
 
 ## Project Goals
@@ -22,10 +22,7 @@ Last Updated: 12/10/2025
 
 
 TODO:
-- Have Dr. Marghoob come up with a new name for the app
-- Ask Nick about pathology report diagnoses options
-- Opimize age/sex vs MRN for benign/biopsy
-- Create local database
+- Optimize age/sex vs MRN for benign/biopsy
 - Integrate database connection
 - Finalized workflow for uploading images (when in the process does this occur?)
 - Preventing photo loss on refresh/different sessions
@@ -39,16 +36,18 @@ TODO:
 - Hash MRN and serve non-protected patient data back
 - Desktop responsiveness
 - Handle long MRNs/data in summary/gallery
-- Tinker with Canfield attachment
+- Tinker with Canfield attachment to set ideal zoom per photo type
 - Instant Zoom
 - Focus
-
+- Extract data button
+- File naming convention
+- Slider sizing issue
 
 
 DONE:
-- ~~Age 5 year buckets~~
-- ~~Capture page scroll issue~~
-- ~~Grab diagnosis list from the 2019 challenge, but be ready to supplement~~
+- ~~Pull correct lesion types from redcap~~
+- ~~Ask Nick about pathology report diagnoses options~~
+- ~~Create local database~~
 
 ## Outstanding Questions
 - AWS Issues
@@ -56,6 +55,8 @@ DONE:
 - Multiple versions of the app?
 - Auth?
 - Canfield automatic toggle limitations (according to Sam)
+- Tying in path reports
+- App name
 
 
 http://172.28.37.105:3000

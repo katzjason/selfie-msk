@@ -16,6 +16,38 @@ export default function Capture() {
   const [zoom, setZoom] = useState<number | null>(null);
 
 
+  const photoSteps = [
+    {
+      id: "closeup",
+      title: "Close-up Photo",
+      description: "From 6 inches away, without any camera attachment",
+    },
+    {
+      id: "polarized-non-contact",
+      title: "Polarized, Non-Contact Photo",
+      description: "Connect the camera attachment and turn it on",
+    },
+    {
+      id: "polarized-contact",
+      title: "Polarized, Contact Photo",
+      description: "Make sure the lesion fills most of the frame.",
+    },
+    {
+      id: "uv",
+      title: "UV Photo",
+      description: "Make sure the lesion fills most of the frame.",
+    },
+    {
+      id: "non-polarized-liquid-contact",
+      title: "Non-polarized, Liquid Contact Photo",
+      description: "Apply liquid and turn select non-polarized light",
+    },
+  ];
+
+  const [stepIndex, setStepIndex] = useState(0);
+  const [imageArr, setImageArr] = useState<string[]>(Array(photoSteps.length).fill(""));
+
+
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -105,19 +137,32 @@ export default function Capture() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
-      console.log("1");
       if (ctx) {
-        console.log("2");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageDataUrl = canvas.toDataURL('image/png');
-        // saving images to local storage
-        const images = JSON.parse(localStorage.getItem('capturedImages') || '[]');
-        images.push(imageDataUrl);
-        const blob = dataUrlToBlob(imageDataUrl); //  converting data URL to Blob
-        const { url } = await uploadImage(blob);
-        localStorage.setItem('capturedImages', JSON.stringify(images));
-        console.log(images);
-        // Do something with imageDataUrl (e.g., save, upload, preview)
+
+        // temporarily save images to imageArr
+        const arrCopy = [...imageArr];
+        arrCopy[stepIndex] = imageDataUrl;
+        setImageArr(arrCopy);
+
+        // save arrCopy to local storage for refresh failsafe
+        let images = JSON.parse(localStorage.getItem('capturedImages') || '{}');
+        if (images.length == 0){
+          images = arrCopy
+        } else {
+          for(let i=0; i < arrCopy.length; i++){
+            if(arrCopy[i]){
+              images[i] == arrCopy[i]
+            }
+          }
+          localStorage.setItem('capturedImages', JSON.stringify(images));
+        }
+
+
+        // FIX THIS API CALL!!!!
+        // const blob = dataUrlToBlob(imageDataUrl); //  converting data URL to Blob
+        // const { url } = await uploadImage(blob);
       }
     }
   };
@@ -140,51 +185,17 @@ export default function Capture() {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, stepIndex, imageArr]);
 
   const goToNextStep = () => {
-  setStepIndex((prev) => Math.min(prev + 1, photoSteps.length - 1));
-};
+    setStepIndex((prev) => Math.min(prev + 1, photoSteps.length - 1));
+  };
 
-const goToPrevStep = () => {
-  setStepIndex((prev) => Math.max(prev - 1, 0));
-};
+  const goToPrevStep = () => {
+    setStepIndex((prev) => Math.max(prev - 1, 0));
+  };
 
-const photoSteps = [
-  {
-    id: "closeup",
-    title: "Close-up Photo",
-    description: "Six inches away without any attachment.",
-  },
-  {
-    id: "non-polarized-non-contact",
-    title: "Non-Polarized, Non-Contact Photo",
-    description: "Make sure the lesion fills most of the frame.",
-  },
-  {
-    id: "non-polarized-contact",
-    title: "Non-Polarized, Contact Photo",
-    description: "Make sure the lesion fills most of the frame.",
-  },
-  {
-    id: "polarized-contact",
-    title: "Polarized, Contact Photo",
-    description: "Make sure the lesion fills most of the frame.",
-  },
-  {
-    id: "non-polarized-liquid",
-    title: "Non-polarized, Liquid Contact Photo",
-    description: "Make sure the lesion fills most of the frame.",
-  },
-  {
-    id: "uv",
-    title: "UV, Liquid Contact Photo",
-    description: "Make sure the lesion fills most of the frame.",
-  },
-  
-];
 
-const [stepIndex, setStepIndex] = useState(0);
 
 
   return (
@@ -220,7 +231,7 @@ const [stepIndex, setStepIndex] = useState(0);
             disabled={stepIndex === photoSteps.length - 1}
             className="px-2 py-1 text-xs rounded-md border border-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Skip
+            {imageArr[stepIndex] ? "Next" : "Skip"}
           </button>
         </div>
       </div>
@@ -228,47 +239,63 @@ const [stepIndex, setStepIndex] = useState(0);
       <div className="relative w-full flex-1 max-h-[75vh] bg-black flex items-start justify-center">
         <div className="relative">
           <div className="relative">
-            {/* Live-feed Element */}
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="w-full h-auto object-contain bg-black "
-            />
-            <CornerMarkers />
+            {imageArr[stepIndex] ? (
+              <img src={imageArr[stepIndex]} className="w-full h-auto object-contain bg-black" />
+            ) : (
+              <div>
+                <video ref={videoRef} autoPlay playsInline className="w-full h-auto object-contain bg-black" />
+                <CornerMarkers />
+              </div>
+            )}        
+            
           </div>
           
-          <CaptureButton clickCallback={() => {
-            goToNextStep();
-            handleCapture();
-          }}/>
+          {imageArr[stepIndex] ? (
+            <div className="flex justify-center mt-4">
+              <button
+                className="bg-white uppercase shadow-lg rounded-lg px-6 py-2 text-black font-semibold text-md hover:bg-white transition-colors duration-200 border border-gray-300"
+                onClick={() => {
+                  // Remove the image for this step
+                  const arrCopy = [...imageArr];
+                  arrCopy[stepIndex] = '';
+                  setImageArr(arrCopy);
+                  
+                }}
+              >
+                Retake
+              </button>
+            </div>
+          ) : (
+            <CaptureButton clickCallback={async () => {
+              await handleCapture();
+              goToNextStep();
+            }}/>
+          )}
+          
         </div>
         
 
-        
-
-        
-
-        <div className="w-10 absolute right-0 top-1/2 -translate-y-1/2 flex flex-col items-center h-90 justify-between">
-          <div className="text-white text-2xl font-semibold pointer-events-none">+</div>
-          {/* Zoom Slider */}
-          <input
-            type="range"
-            min={zoomRange?.min ?? 0}
-            max={zoomRange?.max ?? 10}
-            step={0.01}
-            value={zoom ?? 1}
-            onChange={(e) => handleZoomChange(Number(e.target.value))}
-            aria-orientation="vertical"
-            className="slider-vertical -rotate-90"
-              style={{
-                WebkitAppearance: "none",
-                width: "300px",
-              }}
-          />
-          <div className="text-white text-2xl font-semibold pointer-events-none">-</div>
+        {!imageArr[stepIndex] && (
+          <div className="w-10 absolute right-0 top-1/2 -translate-y-1/2 flex flex-col items-center h-90 justify-between">
+            <div className="text-white text-2xl font-semibold pointer-events-none">+</div>
+            {/* Zoom Slider */}
+            <input
+              type="range"
+              min={zoomRange?.min ?? 0}
+              max={zoomRange?.max ?? 10}
+              step={0.01}
+              value={zoom ?? 1}
+              onChange={(e) => handleZoomChange(Number(e.target.value))}
+              aria-orientation="vertical"
+              className="slider-vertical -rotate-90"
+                style={{
+                  WebkitAppearance: "none",
+                  width: "300px",
+                }}
+            />
+            <div className="text-white text-2xl font-semibold pointer-events-none">-</div>
+          </div>)}
         </div>
-      </div>
       
     </main>}
   </div>

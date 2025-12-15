@@ -16,7 +16,8 @@ const clinicalDiagnosisOptions : string[] = ["Benign", "Malignant"];
 const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95+"]
 const mraDiagnoses : string[] = ["Melanoma", "Melanocytic nevus", "Basal cell carcinoma", "Actinic keratosis", "Benign keratosis (solar lentigo / seborrheic keratosis / lichen planus-like keratosis)",
     "Dermatofibroma", "Vascular lesion", "Squamous cell carcinoma", "Other"];
-const raceOptions : string[] = ["American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Two or More Races", "Other", "Prefer not to answer"];
+const marghoobDiagnoses : string[] = ["Seborrheic Keratosis", "Angioma", "Dermatofibroma"];
+const raceOptions : string[] = ["Hispanic or Latino or Spanish Origin of any race", "American Indian or Alaskan Native", "Asian", "Native Hawaiian or Other Pacific Islander", "Black or African American", "White", "wo or more races"];
 const anatomicSites : string[] = [
   "Head/Neck",
   "Upper Extremity",
@@ -43,6 +44,7 @@ export default function Home() {
     mrn, setMrn,
     lesionID, setLesionID,
     clinicalDiagnosis, setClinicalDiagnosis,
+    lesionType, setLesionType,
     anatomicSite, setAnatomicSite
   } = usePatient();
 
@@ -322,6 +324,21 @@ export default function Home() {
                     }
                 ></FormField>)}
 
+            {!mraStudy && (<FormField label="Lesion Type"
+                children={
+                    <select
+                        value={lesionType ?? ''}
+                        onChange={(e) => setLesionType(e.target.value)}
+                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                    >
+                    <option value="">Select diagnosis...</option>
+                    {marghoobDiagnoses.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                    ))}
+                    </select>
+                    }
+            ></FormField>)}
+
             {mraStudy && (<FormField label="Clinical Diagnosis"
                 children={
                     <select
@@ -372,7 +389,7 @@ export default function Home() {
             {images.map((url, idx) => <img key={idx} src={url} alt={`Captured ${idx}`} />)}
 
           {/* Take Photos Button */}
-          <div className="flex justify-center w-full mt-5">
+          <div className="flex justify-center w-full mt-5 mb-10">
               <div className="w-1/2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col items-center">
                   <button
                     type="button"

@@ -1,12 +1,27 @@
 services:
-  web:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - IMAGE_DIR=/data/images
-    volumes:
-      - selfie_images:/data/images
+    web:
+        build: .
+        ports:
+        - "3000:3000"
+        environment:
+        - IMAGE_DIR=/data/images
+        volumes:
+        - selfie_images:/data/images
+        depends_on:
+        - db
+
+    db:
+        image: postgres:16-alpine
+        environment:
+        - POSTGRES_DB=selfie
+        - POSTGRES_USER=app
+        - POSTGRES_PASSWORD=app_password
+        volumes:
+        - postgres_data:/var/lib/postgresql/data
+        - ./db/init/init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+        ports:
+        - "5433:5432"
 
 volumes:
   selfie_images:
+  postgres_data:

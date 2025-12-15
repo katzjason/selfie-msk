@@ -14,6 +14,7 @@ const PatientContext = createContext({
     mrn: "", setMrn: (mrn: string) => {},
     lesionID: "", setLesionID: (lesionID: string) => {},
     clinicalDiagnosis: "", setClinicalDiagnosis: (clinicalDiagnosis: string) => {},
+    lesionType: "", setLesionType: (lesionType: string) => {},
     anatomicSite: "", setAnatomicSite: (anatomicSite: string) => {},
 });
 
@@ -30,6 +31,7 @@ export default function PatientProvider({children} : {children: React.ReactNode}
     const [mrn, setMrn] = useState("");
     const [lesionID, setLesionID] = useState("");
     const [clinicalDiagnosis, setClinicalDiagnosis] = useState("");
+    const [lesionType, setLesionType] = useState("");
     const [anatomicSite, setAnatomicSite] = useState("");
 
     return (
@@ -46,6 +48,7 @@ export default function PatientProvider({children} : {children: React.ReactNode}
             mrn, setMrn,
             lesionID, setLesionID,
             clinicalDiagnosis, setClinicalDiagnosis,
+            lesionType, setLesionType,
             anatomicSite, setAnatomicSite,
         }}>{children}</PatientContext.Provider>
     );
