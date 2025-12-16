@@ -133,38 +133,27 @@ export default function Capture() {
   const handleCapture = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (video && canvas) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageDataUrl = canvas.toDataURL('image/png');
+    if (!video || !canvas) return;
 
-        // temporarily save images to imageArr
-        const arrCopy = [...imageArr];
-        arrCopy[stepIndex] = imageDataUrl;
-        setImageArr(arrCopy);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-        // save arrCopy to local storage for refresh failsafe
-        let images = JSON.parse(localStorage.getItem('capturedImages') || '{}');
-        if (images.length == 0){
-          images = arrCopy
-        } else {
-          for(let i=0; i < arrCopy.length; i++){
-            if(arrCopy[i]){
-              images[i] == arrCopy[i]
-            }
-          }
-          localStorage.setItem('capturedImages', JSON.stringify(images));
-        }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageDataUrl = canvas.toDataURL("image/png");
+
+    setImageArr((prev) => {
+      const copy = [...prev];
+      copy[stepIndex] = imageDataUrl;
+      return copy;
+    });
 
         // FIX THIS API CALL!!!!
         // const blob = dataUrlToBlob(imageDataUrl); //  converting data URL to Blob
         // const { url } = await uploadImage(blob);
-      }
-    }
+
   };
 
   
@@ -188,13 +177,39 @@ export default function Capture() {
   }, [stream, stepIndex, imageArr]);
 
   const goToNextStep = () => {
+    if(stepIndex == photoSteps.length-1){
+      // submit data to backend and clear local storage
+    }
     setStepIndex((prev) => Math.min(prev + 1, photoSteps.length - 1));
+
   };
 
   const goToPrevStep = () => {
     setStepIndex((prev) => Math.max(prev - 1, 0));
   };
 
+  useEffect(() => {
+    const stored = localStorage.getItem("capturedImages");
+    if (!stored) return;
+
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.some((x) => typeof x === "string" && x.length > 0)) {
+        // Ensure correct length
+        const next = Array(photoSteps.length).fill("");
+        for (let i = 0; i < Math.min(parsed.length, next.length); i++) {
+          if (typeof parsed[i] === "string") next[i] = parsed[i];
+        }
+        setImageArr(next);
+      }
+    } catch {
+
+    }
+  }, []); // run once
+
+  useEffect(() => {
+    localStorage.setItem("capturedImages", JSON.stringify(imageArr));
+  }, [imageArr]);
 
 
 
@@ -228,10 +243,10 @@ export default function Capture() {
           <button
             type="button"
             onClick={goToNextStep}
-            disabled={stepIndex === photoSteps.length - 1}
+            //disabled={stepIndex === photoSteps.length - 1}
             className="px-2 py-1 text-xs rounded-md border border-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            {imageArr[stepIndex] ? "Next" : "Skip"}
+            {stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex] ? "Next" : "Skip"}
           </button>
         </div>
       </div>

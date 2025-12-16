@@ -24,15 +24,10 @@ Last Updated: 12/15/2025
 TODO:
 - Optimize age/sex vs MRN for benign/biopsy
 - Integrate database connection
-- Finalized workflow for uploading images (when in the process does this occur?)
-- Preventing photo loss on refresh/different sessions
 - Monk scale UI
 - Anatomic Site Mannequin
-- Capture multiple photos at one time
-- Delete photos in group
 - Updating data to include biopsy results
 - Admin page for viewing all uploading images in the last X time period?
-- Confirmation before official upload
 - Hash MRN and serve non-protected patient data back
 - Desktop responsiveness
 - Handle long MRNs/data in summary/gallery
@@ -48,6 +43,11 @@ DONE:
 - ~~Pull correct lesion types from redcap~~
 - ~~Ask Nick about pathology report diagnoses options~~
 - ~~Create local database~~
+- ~~Delete photos in group~~
+- ~~Capture multiple photos at one time~~
+- ~~Preventing photo loss on refresh/different sessions~~
+- ~~Finalized workflow for uploading images (when in the process does this occur?)~~
+- ~~Confirmation before official upload~~
 
 ## Outstanding Questions
 - AWS Issues
@@ -78,9 +78,3 @@ http://172.28.37.105:3000
 - Miami/Texas for Marghoob study
 - MSK? (MRA)
 - Barcelona
-
-
-
-## Capture Workflow
-- Save image and metadata to temporary storage
-- Once complete with lesion => upload => back to home page => maybe a image history for memory?
