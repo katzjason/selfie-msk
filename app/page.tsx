@@ -8,8 +8,6 @@ import DemographicsSummary from '@/app/components/demographics-summary';
 import { useRouter } from 'next/navigation';
 import FormField from '@/app/components/form-field';
 
-// All patient data now comes from context
-
 const sexOptions = ['Male', 'Female', 'Other'];
 const diagnosisOptions : string[] = ["Benign", "Biopsy"];
 const clinicalDiagnosisOptions : string[] = ["Benign", "Malignant"];
@@ -26,7 +24,6 @@ const anatomicSites : string[] = [
   "Lateral Torso",
   "Posterior Torso",
   "Palms/Soles",
-  "Oral/Genital"
 ];
 
 export default function Home() {
@@ -55,6 +52,7 @@ export default function Home() {
   //const imageGroups = useMemo( () => groupImages(images), [images]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mraStudy, setMraStudy] = useState(true);
+  const [showRequired, setShowRequired] = useState(false);
 
 
   useEffect(() => { setHasMounted(true); }, []);
@@ -90,6 +88,7 @@ export default function Home() {
     useEffect(() => {
     const imgs = JSON.parse(localStorage.getItem('capturedImages') || '[]');
     setImages(imgs);
+    //REQUIRED
     }, []);
 
 
@@ -150,14 +149,7 @@ export default function Home() {
         </div>
         
 
-
-
-
-
-
-
-
-          {/* Toggle Button */}
+          {/* Expand Summary Button */}
           <div className="flex mb-5">
               {!showDemographics && (
                   <button
@@ -173,11 +165,11 @@ export default function Home() {
           </div>
 
         {/* Form Grid */}
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pl-10 pr-10">
+        <div className="max-w-xl mx-auto grid grid-cols-1 gap-5 pl-10 pr-10">
             {showDemographics && (
             <div className="grid grid-cols-1 gap-5">
 
-                {!mraStudy && (<FormField label="Patient Name"
+                {/* {!mraStudy && (<FormField label="Patient Name"
                     children={
                         <input
                           type="text"
@@ -188,9 +180,9 @@ export default function Home() {
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                       />
                     }
-                ></FormField>)}
+                ></FormField>)} */}
 
-                {!mraStudy && (<FormField label="Date of Birth"
+                {/* {!mraStudy && (<FormField label="Date of Birth"
                     children={
                         <input
                           type="date"
@@ -201,14 +193,14 @@ export default function Home() {
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                       />
                     }
-                ></FormField>)}
+                ></FormField>)} */}
 
-                {mraStudy && (<FormField label="Age"
+                {mraStudy && (<FormField label="Age" requiredFlag={showRequired && age == ""}
                     children={
                         <select
                             value={age ?? ''}
                             onChange={(e) => setAge(e.target.value)}
-                            className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
                         >
                         <option value="">Select age range...</option>
                         {ageOptions.map((option) => (
@@ -236,7 +228,7 @@ export default function Home() {
                     /> */}
                 {/* </div> */}
 
-                <FormField label="Sex"
+                <FormField label="Sex" requiredFlag={showRequired && sex == ""}
                     children={
                         <div className="flex flex-row gap-4">
                           {sexOptions.map((option) => (
@@ -256,7 +248,7 @@ export default function Home() {
                     }
                 ></FormField>
 
-                {!mraStudy && (<FormField label="Fitzpatrick Skin Type"
+                {!mraStudy && (<FormField label="Fitzpatrick Skin Type" requiredFlag={false}
                     children={
                         <select
                           value={fitzpatrick ?? ''}
@@ -271,7 +263,7 @@ export default function Home() {
                         }
                 ></FormField>)}
 
-                {!mraStudy && (<FormField label="ITA Scale"
+                {!mraStudy && (<FormField label="ITA Scale" requiredFlag={false}
                     children={
                         <input
                           type="text"
@@ -284,7 +276,7 @@ export default function Home() {
                         }
                 ></FormField>)}
 
-                <FormField label="Monk Skin Tone"
+                <FormField label="Monk Skin Tone" requiredFlag={false}
                     children={
                         <select
                           value={monkSkinTone ?? ''}
@@ -301,7 +293,7 @@ export default function Home() {
                     }
                 ></FormField>
 
-                {true && (<FormField label="MRN"
+                {true && (<FormField label="MRN" requiredFlag={false}
                     children={
                         <input
                           type="text"
@@ -316,7 +308,7 @@ export default function Home() {
             </div>
             )}
 
-            {!mraStudy && (<FormField label="Self-reported Race"
+            {!mraStudy && (<FormField label="Self-reported Race" requiredFlag={false}
                     children={
                         <select
                           value={race ?? ''}
@@ -331,12 +323,12 @@ export default function Home() {
                     }
                 ></FormField>)}
 
-            {!mraStudy && (<FormField label="Lesion Type"
+            {!mraStudy && (<FormField label="Lesion Type" requiredFlag={showRequired && lesionType == ""}
                 children={
                     <select
                         value={lesionType ?? ''}
                         onChange={(e) => setLesionType(e.target.value)}
-                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
                     >
                     <option value="">Select diagnosis...</option>
                     {marghoobDiagnoses.map((type) => (
@@ -346,12 +338,12 @@ export default function Home() {
                     }
             ></FormField>)}
 
-            {mraStudy && (<FormField label="Clinical Diagnosis"
+            {mraStudy && (<FormField label="Clinical Diagnosis" requiredFlag={showRequired && clinicalDiagnosis==""}
                 children={
                     <select
                         value={clinicalDiagnosis ?? ''}
                         onChange={(e) => setClinicalDiagnosis(e.target.value)}
-                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
                     >
                     <option value="">Select diagnosis...</option>
                     {mraDiagnoses.map((type) => (
@@ -363,7 +355,7 @@ export default function Home() {
 
             {/* Conditional Fields for Biopsy Diagnosis */}
             {/* {hasMounted && diagnosis?.toLowerCase() === "biopsy" &&  */}
-            {true && (<FormField label="Lesion ID"
+            {true && (<FormField label="Lesion ID" requiredFlag={showRequired && lesionID == ""}
                     children={
                         <input
                             type="text"
@@ -371,18 +363,18 @@ export default function Home() {
                             value={lesionID ?? ''}
                             onChange={(e) => setLesionID(e.target.value)}
                             placeholder="Enter patient lesion ID"
-                            className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
                         />
                     }
                 ></FormField>)
             }
 
-            <FormField label="Anatomic Site"
+            <FormField label="Anatomic Site" requiredFlag={showRequired && anatomicSite == ""}
                 children={
                     <select
                         value={anatomicSite ?? ''}
                         onChange={(e) => setAnatomicSite(e.target.value)}
-                        className="w-full text-black px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
                     >
                     {anatomicSites.map((option) => (
                     <option key={option} value={option}>
@@ -393,37 +385,24 @@ export default function Home() {
                     }
             ></FormField>
 
-            {/* {images.map((url, idx) => <img key={idx} src={url} alt={`Captured ${idx}`} />)} */}
-
           {/* Take Photos Button */}
           <div className="flex justify-center w-full mt-5 mb-10">
               <div className="w-1/2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col items-center">
                   <button
                     type="button"
                     className="block text-sm font-semibold text-white uppercase tracking-wide"
-                    onClick={() =>router.push('capture')}
+                    onClick={() => {
+                        if(age != "" && sex !=  "" && (clinicalDiagnosis != "" || lesionType != "") && anatomicSite != ""){
+                            setShowDemographics(false);
+                            setShowRequired(false);
+                            //router.push('capture');
+                        } else {
+                            setShowRequired(true);
+                        }
+                    }}
                   >Take Photos</button>
-                  {/* <button
-                      type="button"   
-                      className="block text-sm font-semibold text-white uppercase tracking-wide"
-                      onClick={handleCaptureButton}
-                  >
-                  Take Photos
-                  </button>
-                  <input
-                      ref={inputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment" // rear camera on most phones
-                      onChange={handleCaptureInput}
-                      style={{ display: "none" }}
-                  /> */}
               </div>
           </div>
-          {/* {imageGroups.map( (group) => (
-              <ImageGroup key={group.id} images={group.images} mrn={group.mrn} anatomicSite={group.anatomicSite} lesionID={group.lesionID} onAddPhoto={() => AddPhotoToGroup(group.id)} />
-
-          ))} */}
           
           {/* Sidebar overlay */}
           {menuOpen && (
@@ -455,6 +434,7 @@ export default function Home() {
                         >Marghoob
                         </button>
                     </div>
+                    {/* <div>Export Data</div> */}
                 </nav>
               </aside>
             </>

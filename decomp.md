@@ -21,23 +21,28 @@ Last Updated: 12/16/2025
 
 
 
-TODO:
+# TODO:
+
+## Frontend
 - Optimize age/sex vs MRN for benign/biopsy
-- Integrate database connection
+- Make certain fields required
+- Image Order
+- Slider sizing issue
 - Monk scale UI
+- Focus
 - Anatomic Site Mannequin
+
+## Backend
+- File naming convention
+- Integrate database connection
+- Extract data button
+- Hash MRN and serve non-protected patient data back
+
+## Out of Scope
 - Updating data to include biopsy results
 - Admin page for viewing all uploading images in the last X time period?
-- Hash MRN and serve non-protected patient data back
-- Desktop responsiveness
-- Handle long MRNs/data in summary/gallery
-- Tinker with Canfield attachment to set ideal zoom per photo type
-- Focus
-- Extract data button
-- File naming convention
-- Slider sizing issue
-- Make certain fields required
 - Cloud terms and conditions?
+
 
 
 DONE:
@@ -52,6 +57,9 @@ DONE:
 - ~~Clearing local storage cache~~
 - ~~Some indication that the photos were submitted~~
 - ~~Instant Zoom~~
+- ~~Tinker with Canfield attachment to set ideal zoom per photo type~~
+- ~~Desktop responsiveness~~
+- ~~Update summary box~~
 
 ## Outstanding Questions
 - AWS Issues
