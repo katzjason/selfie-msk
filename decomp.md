@@ -1,6 +1,6 @@
 # Selfie App Decomposition
 Author:  Jason Katz <br>
-Last Updated: 12/15/2025
+Last Updated: 12/16/2025
 
 
 ## Project Goals
@@ -32,11 +32,12 @@ TODO:
 - Desktop responsiveness
 - Handle long MRNs/data in summary/gallery
 - Tinker with Canfield attachment to set ideal zoom per photo type
-- Instant Zoom
 - Focus
 - Extract data button
 - File naming convention
 - Slider sizing issue
+- Make certain fields required
+- Cloud terms and conditions?
 
 
 DONE:
@@ -48,6 +49,9 @@ DONE:
 - ~~Preventing photo loss on refresh/different sessions~~
 - ~~Finalized workflow for uploading images (when in the process does this occur?)~~
 - ~~Confirmation before official upload~~
+- ~~Clearing local storage cache~~
+- ~~Some indication that the photos were submitted~~
+- ~~Instant Zoom~~
 
 ## Outstanding Questions
 - AWS Issues
@@ -63,6 +67,7 @@ http://172.28.37.105:3000
 
 
 ## Marghoob Study
+- NO PHI COLLECTED (12/16)
 - No need to biopsy -- they are all benign
 - Diagnosis will be based on clinical/dermoscopic visual analysis
 - Name, Date, MRN, DOB, Sex, Fitzpatrick Skin Type, ITA values, Monk Scale, Self-reported race
@@ -78,3 +83,8 @@ http://172.28.37.105:3000
 - Miami/Texas for Marghoob study
 - MSK? (MRA)
 - Barcelona
+
+
+## Questions
+- Alignment of data fields
+- Exact order/types of photos taken

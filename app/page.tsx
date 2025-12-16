@@ -150,6 +150,13 @@ export default function Home() {
         </div>
         
 
+
+
+
+
+
+
+
           {/* Toggle Button */}
           <div className="flex mb-5">
               {!showDemographics && (
@@ -386,7 +393,7 @@ export default function Home() {
                     }
             ></FormField>
 
-            {images.map((url, idx) => <img key={idx} src={url} alt={`Captured ${idx}`} />)}
+            {/* {images.map((url, idx) => <img key={idx} src={url} alt={`Captured ${idx}`} />)} */}
 
           {/* Take Photos Button */}
           <div className="flex justify-center w-full mt-5 mb-10">

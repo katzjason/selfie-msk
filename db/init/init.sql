@@ -1,8 +1,6 @@
 
 CREATE TABLE patients (
     mrn_hash CHAR(64) PRIMARY KEY, -- SHA-256 hash of MRN (64 hex chars)
-    full_name TEXT,
-    date_of_birth DATE,
     age_range VARCHAR(5) NOT NULL CHECK (age_range IN (
       '0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49',
       '50-54','55-59','60-64','65-69','70-74','75-79','80-84','85-89','90-94','95+'

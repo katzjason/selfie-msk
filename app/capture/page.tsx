@@ -5,6 +5,7 @@ import { useRouter } from "next/dist/client/components/navigation";
 import FooterButtons from '../components/footer-buttons';
 import CaptureButton from '@/app/components/capture-button';
 import CornerMarkers from '@/app/components/corner-markers';
+import { useToast } from '@/app/components/toast-provider';
 
 
 export default function Capture() {
@@ -14,6 +15,8 @@ export default function Capture() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [zoomRange, setZoomRange] = useState<{min: number, max: number} | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
+  const router = useRouter();
+  const { showToast } = useToast();
 
 
   const photoSteps = [
@@ -156,6 +159,43 @@ export default function Capture() {
 
   };
 
+
+
+  const rafRef = useRef<number | null>(null);
+  const pendingZoomRef = useRef<number | null>(null);
+
+  const applyZoomNow = (z: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    
+    // Apply immediately; no need to wait for setState
+    track.applyConstraints({ advanced: [{ zoom: z }] } as any).catch(() => {
+      // Some devices/browsers won't support zoom; ignore gracefully
+    });
+  };
+
+  const scheduleZoom = (z: number) => {
+    pendingZoomRef.current = z;
+
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      if (pendingZoomRef.current == null) return;
+      applyZoomNow(pendingZoomRef.current);
+    });
+  };
+
+
+
+
+
+
+
+
+
+
+
+
   
 
   useEffect(() => {
@@ -178,15 +218,29 @@ export default function Capture() {
 
   const goToNextStep = () => {
     if(stepIndex == photoSteps.length-1){
-      // submit data to backend and clear local storage
+      handleUpload();
     }
     setStepIndex((prev) => Math.min(prev + 1, photoSteps.length - 1));
-
   };
+
+  const handleUpload = () => {
+    // TODO write data to the database
+
+    showToast("Submitted photos", 3000);
+    
+    // Clear captured images from local storage
+    localStorage.removeItem("capturedImages");
+    setImageArr(Array(photoSteps.length).fill(""));
+
+    // Navigate back to page to capture next lesion
+    router.back();
+  }
 
   const goToPrevStep = () => {
     setStepIndex((prev) => Math.max(prev - 1, 0));
   };
+
+  
 
   useEffect(() => {
     const stored = localStorage.getItem("capturedImages");
@@ -298,9 +352,14 @@ export default function Capture() {
               type="range"
               min={zoomRange?.min ?? 0}
               max={zoomRange?.max ?? 10}
-              step={0.01}
+              step={0.1}
               value={zoom ?? 1}
-              onChange={(e) => handleZoomChange(Number(e.target.value))}
+              //onChange={(e) => handleZoomChange(Number(e.target.value))}
+              onInput={(e) => {
+                const z = Number((e.target as HTMLInputElement).value);
+                setZoom(z);        // UI thumb updates
+                scheduleZoom(z);   // camera updates “live”
+              }}
               aria-orientation="vertical"
               className="slider-vertical -rotate-90"
                 style={{

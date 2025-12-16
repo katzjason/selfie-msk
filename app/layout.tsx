@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "./header";
-import PatientProvider from './contexts/patient'
+import { ToastProvider } from '@/app/components/toast-provider';
+import PatientProvider from './contexts/patient';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,10 +34,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
       <PatientProvider>
-        {/* <Header /> */}
-        <main>
-          {children}
-        </main>
+        <ToastProvider>
+          <main>
+            {children}
+          </main>
+        </ToastProvider>
       </PatientProvider>
       </body>
     </html>
