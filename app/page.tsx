@@ -1,48 +1,35 @@
 'use client';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef} from 'react';
 import { usePatient } from '@/app/contexts/patient';
-import { Image, groupImages } from "@/app/capture/image-helpers";
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import ImageGroup from './capture/image-group';
 import DemographicsSummary from '@/app/components/demographics-summary';
 import { useRouter } from 'next/navigation';
 import FormField from '@/app/components/form-field';
+import MenuIcon from '@/app/components/menu-icon'
+import { preconnect } from 'react-dom';
 
 const sexOptions = ['Male', 'Female', 'Other'];
-const diagnosisOptions : string[] = ["Benign", "Biopsy"];
-const clinicalDiagnosisOptions : string[] = ["Benign", "Malignant"];
 const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95+"]
-const mraDiagnoses : string[] = ["Melanoma", "Melanocytic nevus", "Basal cell carcinoma", "Actinic keratosis", "Benign keratosis (solar lentigo / seborrheic keratosis / lichen planus-like keratosis)",
-    "Dermatofibroma", "Vascular lesion", "Squamous cell carcinoma", "Other"];
-const marghoobDiagnoses : string[] = ["Seborrheic Keratosis", "Angioma", "Dermatofibroma"];
+const mraDiagnoses : string[] = ["Angioma", "Benign keratosis (solar lentigo/SK/LPLK)", "Dermatofibroma", "Nevus",  "BCC",  "SCC",  "Melanoma", "Other"];
 const raceOptions : string[] = ["Hispanic or Latino or Spanish Origin of any race", "American Indian or Alaskan Native", "Asian", "Native Hawaiian or Other Pacific Islander", "Black or African American", "White", "wo or more races"];
-const anatomicSites : string[] = [
-  "Head/Neck",
-  "Upper Extremity",
-  "Lower Extremity",
-  "Anterior Torso",
-  "Lateral Torso",
-  "Posterior Torso",
-  "Palms/Soles",
-];
+const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
 
 export default function Home() {
   const router = useRouter();
+  //const { age, updatePatient } = usePatient();
   const {
-    name, setName,
-    dob, setDob,
-    age, setAge,
-    sex, setSex,
-    fitzpatrick, setFitzpatrick,
-    race, setRace,
-    ita, setIta,
-    monkSkinTone, setMonkSkinTone,
-    diagnosis, setDiagnosis,
-    mrn, setMrn,
-    lesionID, setLesionID,
-    clinicalDiagnosis, setClinicalDiagnosis,
-    lesionType, setLesionType,
-    anatomicSite, setAnatomicSite
+    updatePatient,
+    age,
+    sex,
+    monkSkinTone,
+    fitzpatrick,
+    ita,
+    race,
+    newPatient,
+    biopsy,
+    mrn,
+    lesionID,
+    clinicalDiagnosis,
+    anatomicSite,
   } = usePatient();
 
   const [hasMounted, setHasMounted] = useState(false);
@@ -88,119 +75,44 @@ export default function Home() {
     useEffect(() => {
     const imgs = JSON.parse(localStorage.getItem('capturedImages') || '[]');
     setImages(imgs);
-    //REQUIRED
     }, []);
 
 
   return (
       <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900">
-
         <div className="relative flex flex-row">
-            <button className="relative group flex"
-                onClick={() => setMenuOpen((prev) => !prev)}
-            >
-                <div className="relative flex overflow-hidden items-center justify-center rounded-full w-[72px] h-[72px]">
-                    <div className="flex flex-col justify-between w-[32px] h-[28px] relative">
-                        {/* Hamburger lines */}
-                        <div
-                        className={[
-                            "bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-full transform transition-all duration-300 origin-left",
-                            menuOpen ? "translate-x-10 opacity-0" : "translate-x-0 opacity-100",
-                        ].join(" ")}
-                        />
-                        <div
-                        className={[
-                            "bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-full rounded transform transition-all duration-300",
-                            menuOpen ? "translate-x-10 opacity-0 delay-75" : "translate-x-0 opacity-100 delay-75",
-                        ].join(" ")}
-                        />
-                        <div
-                        className={[
-                            "bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-full transform transition-all duration-300 origin-left",
-                            menuOpen ? "translate-x-10 opacity-0 delay-150" : "translate-x-0 opacity-100 delay-150",
-                        ].join(" ")}
-                        />
-
-                        {/* X icon */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                        <div
-                            className={[
-                            "absolute bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-8 transform transition-all duration-500",
-                            menuOpen ? "rotate-45 opacity-100 delay-150" : "rotate-0 opacity-0",
-                            ].join(" ")}
-                        />
-                        <div
-                            className={[
-                            "absolute bg-gradient-to-br from-yellow-500 to-pink-500 h-[3px] w-8 transform transition-all duration-500",
-                            menuOpen ? "-rotate-45 opacity-100 delay-150" : "rotate-0 opacity-0",
-                            ].join(" ")}
-                        />
-                        </div>
-                    </div>
-                </div>
-            </button>
+            <MenuIcon menuOpen={menuOpen} onClick={() => {setMenuOpen((prev) => !prev)}} />
 
             {/* Title */}
             <div className="max-w-5xl mx-auto mb-8 absolute inset-3 pointer-events-none">
                 <h1 className="text-2xl font-extrabold uppercase bg-gradient-to-br from-yellow-200 to-pink-500 bg-clip-text text-transparent text-center">Selfie App</h1>
                 <h2 className="text-xs text-white text-center">Streamlined lesion photography</h2>
             </div>
-
         </div>
         
-
-          {/* Expand Summary Button */}
-          <div className="flex mb-5">
-              {!showDemographics && (
-                  <button
-                      onClick={() => setShowDemographics(true)}
-                      className="bg-white shadow-lg rounded-lg px-2 py-2 transition-colors duration-200 flex items-center gap-2 w-full"
-                      //aria-label={showDemographics ? 'Collapse section' : 'Expand section'}
-                      >
-                      {!showDemographics && (
-                          <DemographicsSummary />
-                      )}
-                      </button>
-              )}
-          </div>
+        {/* Expand Summary Button */}
+        <div className="flex mb-5">
+            {!showDemographics && (
+                <button
+                    onClick={() => setShowDemographics(true)}
+                    className="bg-white shadow-lg rounded-lg px-2 py-2 transition-colors duration-200 flex items-center gap-2 w-full"
+                    >
+                    {!showDemographics && (<DemographicsSummary />)}
+                </button>
+            )}
+        </div>
 
         {/* Form Grid */}
         <div className="max-w-xl mx-auto grid grid-cols-1 gap-5 pl-10 pr-10">
             {showDemographics && (
             <div className="grid grid-cols-1 gap-5">
 
-                {/* {!mraStudy && (<FormField label="Patient Name"
-                    children={
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={name ?? ''}
-                          onChange={(e) => setName(e.target.value)}
-                          placeholder="Enter patient name"
-                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                      />
-                    }
-                ></FormField>)} */}
-
-                {/* {!mraStudy && (<FormField label="Date of Birth"
-                    children={
-                        <input
-                          type="date"
-                          inputMode="numeric"
-                          value={dob ?? ''}
-                          onChange={(e) => setDob(e.target.value)}
-                          placeholder="Enter date of birth"
-                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                      />
-                    }
-                ></FormField>)} */}
-
-                {mraStudy && (<FormField label="Age" requiredFlag={showRequired && age == ""}
+                <FormField label="Age" requiredFlag={showRequired && age == ""}
                     children={
                         <select
                             value={age ?? ''}
-                            onChange={(e) => setAge(e.target.value)}
-                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
+                            onChange={(e) => updatePatient({ age: e.target.value })}
+                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && age == "" ? "border-red-500" : "border-gray-200")}
                         >
                         <option value="">Select age range...</option>
                         {ageOptions.map((option) => (
@@ -210,23 +122,7 @@ export default function Home() {
                         ))}
                         </select>
                     }
-                ></FormField>)}
-                    {/* <input
-                        type="text"
-                        inputMode="numeric"
-                        value={age ?? ''}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === '')  {
-                                setAge("");
-                                return;
-                            }
-                            setAge(val);
-                        }}
-                        placeholder="Enter patient age"
-                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                    /> */}
-                {/* </div> */}
+                ></FormField>
 
                 <FormField label="Sex" requiredFlag={showRequired && sex == ""}
                     children={
@@ -237,9 +133,9 @@ export default function Home() {
                                       type="radio"
                                       name="sex"
                                       value={option}
-                                      className="accent-gray-500 w-4 h-4"
+                                      className="w-4 h-4 accent-gray-500"
                                       checked={sex === option}
-                                      onChange={() => setSex(option)}
+                                      onChange={(e) => updatePatient({ sex: e.target.value })}
                                   />
                                   <div>{option}</div>
                               </label>
@@ -248,11 +144,39 @@ export default function Home() {
                     }
                 ></FormField>
 
+                {(!mraStudy || (mraStudy && !newPatient) ) && (<FormField label="MRN" requiredFlag={false}
+                    children={
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={mrn ?? ''}
+                          onChange={(e) => updatePatient({ mrn: e.target.value })}
+                          placeholder="Enter patient MRN"
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                      />
+                        }
+                ></FormField>)}
+
+                <FormField label="Monk Skin Tone" requiredFlag={false}
+                    children={
+                        <select
+                          value={monkSkinTone ?? ''}
+                          onChange={(e) => updatePatient({ monkSkinTone: e.target.value })}
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
+                        >
+                        <option value="">Select type...</option>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((type) => (
+                        <option key={type} value={type}>Type {type}</option>
+                        ))}
+                        </select>
+                    }
+                ></FormField>
+
                 {!mraStudy && (<FormField label="Fitzpatrick Skin Type" requiredFlag={false}
                     children={
                         <select
                           value={fitzpatrick ?? ''}
-                          onChange={(e) => setFitzpatrick(e.target.value)}
+                          onChange={(e) => updatePatient({ fitzpatrick: e.target.value })}
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
                         >
                         <option value="">Select type...</option>
@@ -269,50 +193,18 @@ export default function Home() {
                           type="text"
                           inputMode="numeric"
                           value={ita ?? ''}
-                          onChange={(e) => setIta(e.target.value)}
+                          onChange={(e) => updatePatient({ ita: e.target.value })}
                           placeholder="Enter ITA value"
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                         />
                         }
                 ></FormField>)}
 
-                <FormField label="Monk Skin Tone" requiredFlag={false}
-                    children={
-                        <select
-                          value={monkSkinTone ?? ''}
-                          onChange={(e) => setMonkSkinTone(e.target.value)}
-                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
-                        >
-                        <option value="">Select type...</option>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((type) => (
-                        <option key={type} value={type}>
-                            Type {type}
-                        </option>
-                        ))}
-                        </select>
-                    }
-                ></FormField>
-
-                {true && (<FormField label="MRN" requiredFlag={false}
-                    children={
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={mrn ?? ''}
-                          onChange={(e) => setMrn(e.target.value)}
-                          placeholder="Enter patient MRN"
-                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                      />
-                        }
-                ></FormField>)}
-            </div>
-            )}
-
-            {!mraStudy && (<FormField label="Self-reported Race" requiredFlag={false}
+                {!mraStudy && (<FormField label="Self-reported Race" requiredFlag={false}
                     children={
                         <select
                           value={race ?? ''}
-                          onChange={(e) => setRace(e.target.value)}
+                          onChange={(e) => updatePatient({ race: e.target.value })}
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
                         >
                         <option value="">Select self-reported race...</option>
@@ -322,28 +214,15 @@ export default function Home() {
                         </select>
                     }
                 ></FormField>)}
+            </div>
+            )}
 
-            {!mraStudy && (<FormField label="Lesion Type" requiredFlag={showRequired && lesionType == ""}
-                children={
-                    <select
-                        value={lesionType ?? ''}
-                        onChange={(e) => setLesionType(e.target.value)}
-                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
-                    >
-                    <option value="">Select diagnosis...</option>
-                    {marghoobDiagnoses.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                    ))}
-                    </select>
-                    }
-            ></FormField>)}
-
-            {mraStudy && (<FormField label="Clinical Diagnosis" requiredFlag={showRequired && clinicalDiagnosis==""}
+            <FormField label="Clinical Diagnosis" requiredFlag={showRequired && clinicalDiagnosis==""}
                 children={
                     <select
                         value={clinicalDiagnosis ?? ''}
-                        onChange={(e) => setClinicalDiagnosis(e.target.value)}
-                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
+                        onChange={(e) => updatePatient({ clinicalDiagnosis: e.target.value })}
+                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && clinicalDiagnosis=="" ? "border-red-500" : "border-gray-200")}
                     >
                     <option value="">Select diagnosis...</option>
                     {mraDiagnoses.map((type) => (
@@ -351,30 +230,14 @@ export default function Home() {
                     ))}
                     </select>
                 }
-            ></FormField>)}
-
-            {/* Conditional Fields for Biopsy Diagnosis */}
-            {/* {hasMounted && diagnosis?.toLowerCase() === "biopsy" &&  */}
-            {true && (<FormField label="Lesion ID" requiredFlag={showRequired && lesionID == ""}
-                    children={
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            value={lesionID ?? ''}
-                            onChange={(e) => setLesionID(e.target.value)}
-                            placeholder="Enter patient lesion ID"
-                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
-                        />
-                    }
-                ></FormField>)
-            }
+            ></FormField>
 
             <FormField label="Anatomic Site" requiredFlag={showRequired && anatomicSite == ""}
                 children={
                     <select
                         value={anatomicSite ?? ''}
-                        onChange={(e) => setAnatomicSite(e.target.value)}
-                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired ? "border-red-500" : "border-gray-200")}
+                        onChange={(e) => updatePatient({ anatomicSite: e.target.value })}
+                        className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && anatomicSite == "" ? "border-red-500" : "border-gray-200")}
                     >
                     {anatomicSites.map((option) => (
                     <option key={option} value={option}>
@@ -385,6 +248,47 @@ export default function Home() {
                     }
             ></FormField>
 
+            <FormField label="Lesion ID" requiredFlag={showRequired && lesionID == ""}
+                children={
+                    <div>
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            value={lesionID ?? ''}
+                            onChange={(e) => updatePatient({ lesionID: e.target.value })}
+                            placeholder="Enter patient lesion ID"
+                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && lesionID == "" ? "border-red-500" : "border-gray-200")}
+                        />
+                        
+                        {mraStudy && (<label className="flex flex-row items-center gap-2 text-black mt-4" key="biopsy">
+                            <input 
+                                type="checkbox"
+                                name="biopsy"
+                                value="Biopsy"
+                                className="accent-gray-500 w-4 h-4"
+                                checked={biopsy === true}
+                                onChange={() => {updatePatient({ biopsy: !biopsy })}}
+                            />
+                            <div>Biopsy</div>
+                        </label>)}
+                    </div>
+                }
+            ></FormField>
+
+            {mraStudy && biopsy && newPatient && (<FormField label="MRN" requiredFlag={false}
+                    children={
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={mrn ?? ''}
+                          onChange={(e) => updatePatient({ mrn : e.target.value })}
+                          placeholder="Enter patient MRN"
+                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                      />
+                        }
+            ></FormField>)}
+
+            
           {/* Take Photos Button */}
           <div className="flex justify-center w-full mt-5 mb-10">
               <div className="w-1/2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col items-center">
@@ -392,10 +296,11 @@ export default function Home() {
                     type="button"
                     className="block text-sm font-semibold text-white uppercase tracking-wide"
                     onClick={() => {
-                        if(age != "" && sex !=  "" && (clinicalDiagnosis != "" || lesionType != "") && anatomicSite != ""){
+                        if(age && sex && clinicalDiagnosis && anatomicSite){
                             setShowDemographics(false);
                             setShowRequired(false);
-                            //router.push('capture');
+                            updatePatient({ newPatient: false })
+                            router.push('capture');
                         } else {
                             setShowRequired(true);
                         }

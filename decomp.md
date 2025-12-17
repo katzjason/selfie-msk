@@ -1,6 +1,6 @@
 # Selfie App Decomposition
 Author:  Jason Katz <br>
-Last Updated: 12/16/2025
+Last Updated: 12/17/2025
 
 
 ## Project Goals
@@ -24,18 +24,20 @@ Last Updated: 12/16/2025
 # TODO:
 
 ## Frontend
-- Optimize age/sex vs MRN for benign/biopsy
-- Make certain fields required
 - Image Order
 - Slider sizing issue
 - Monk scale UI
 - Focus
 - Anatomic Site Mannequin
+- Layout size optimization
+- New Patient Reset
+- Image types
+- Missing fields from summary
 
 ## Backend
 - File naming convention
 - Integrate database connection
-- Extract data button
+- Export data button
 - Hash MRN and serve non-protected patient data back
 
 ## Out of Scope
@@ -46,20 +48,6 @@ Last Updated: 12/16/2025
 
 
 DONE:
-- ~~Pull correct lesion types from redcap~~
-- ~~Ask Nick about pathology report diagnoses options~~
-- ~~Create local database~~
-- ~~Delete photos in group~~
-- ~~Capture multiple photos at one time~~
-- ~~Preventing photo loss on refresh/different sessions~~
-- ~~Finalized workflow for uploading images (when in the process does this occur?)~~
-- ~~Confirmation before official upload~~
-- ~~Clearing local storage cache~~
-- ~~Some indication that the photos were submitted~~
-- ~~Instant Zoom~~
-- ~~Tinker with Canfield attachment to set ideal zoom per photo type~~
-- ~~Desktop responsiveness~~
-- ~~Update summary box~~
 
 ## Outstanding Questions
 - AWS Issues
