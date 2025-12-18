@@ -12,6 +12,7 @@ const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-3
 const mraDiagnoses : string[] = ["Angioma", "Benign keratosis (solar lentigo/SK/LPLK)", "Dermatofibroma", "Nevus",  "BCC",  "SCC",  "Melanoma", "Other"];
 const raceOptions : string[] = ["White", "Hispanic/Latino/Spanish Origin of any race", "Black or African American", "Asian", "American Indian or Alaskan Native", "Native Hawaiian or Other Pacific Islander", "Two or more races"];
 const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
+const FIRST_VISIT_KEY = "hasSeenMenu";
 
 export default function Home() {
     const router = useRouter();
@@ -35,7 +36,7 @@ export default function Home() {
     const [images, setImages] = useState<string[]>([]);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [showDemographics, setShowDemographics] = useState(true);
-    const [menuOpen, setMenuOpen] = useState(true);
+    const [menuOpen, setMenuOpen] = useState(false);
     const [mraStudy, setMraStudy] = useState(true);
     const [showRequired, setShowRequired] = useState(false);
     const [showReset, setShowReset] = useState(false);
@@ -56,13 +57,40 @@ export default function Home() {
         if (showResetCached !== null) {
             setShowReset(JSON.parse(showResetCached));
         }
+
+        // const showMenuOpenCached = localStorage.getItem('showMenuOpen');
+        // if (showMenuOpenCached !== null) {
+        //     setShowReset(JSON.parse(showMenuOpenCached));
+        // }
+
+        const hasSeen = localStorage.getItem(FIRST_VISIT_KEY);
+
+        if (!hasSeen) {
+            // first ever mount in this browser
+            setMenuOpen(true);
+            localStorage.setItem(FIRST_VISIT_KEY, "true");
+        } else {
+            // not first visit -> keep closed
+            setMenuOpen(false);
+        }
     }, []);
+
+
 
 
   return (
       <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900">
         <div className="relative flex flex-row">
-            <MenuIcon menuOpen={menuOpen} onClick={() => {setMenuOpen((prev) => !prev)}} />
+            <MenuIcon
+                menuOpen={menuOpen}
+                onClick={() => {
+                    setMenuOpen(prev => {
+                    const next = !prev;
+                    localStorage.setItem("showMenuOpen", JSON.stringify(next));
+                    return next;
+                    });
+                }}
+                />
 
             {/* Title */}
             <div className="max-w-5xl mx-auto mb-8 absolute inset-3 pointer-events-none">
@@ -302,7 +330,10 @@ export default function Home() {
             <>
               <div
                 className="fixed inset-0 bg-black/40 z-40"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                    setMenuOpen(false);
+                    localStorage.setItem("showMenuOpen", JSON.stringify(false));
+                }}
                 aria-label="Close sidebar overlay"
               />
               <aside className="fixed top-0 left-0 h-full w-64 bg-gradient-to-br from-gray-200 to-gray-500 shadow-lg z-50 flex flex-col p-6 transition-transform duration-300">
@@ -314,6 +345,7 @@ export default function Home() {
                                 setMraStudy(true);
                                 localStorage.setItem('mraStudy', JSON.stringify(true));
                                 setMenuOpen(false);
+                                localStorage.setItem("showMenuOpen", JSON.stringify(false));
                             }}
                         >MRA Study
                         </button>
@@ -325,6 +357,7 @@ export default function Home() {
                                 setMraStudy(false);
                                 localStorage.setItem('mraStudy', JSON.stringify(false));
                                 setMenuOpen(false);
+                                localStorage.setItem("showMenuOpen", JSON.stringify(false));
                             }}
                         >Marghoob
                         </button>
