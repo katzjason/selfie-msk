@@ -24,15 +24,11 @@ Last Updated: 12/17/2025
 # TODO:
 
 ## Frontend
-- Image Order
 - Slider sizing issue
 - Monk scale UI
 - Focus
 - Anatomic Site Mannequin
 - Layout size optimization
-- New Patient Reset
-- Image types
-- Missing fields from summary
 
 ## Backend
 - File naming convention
@@ -57,6 +53,7 @@ DONE:
 - Canfield automatic toggle limitations (according to Sam)
 - Tying in path reports
 - App name
+- LANGUAGE/DERM DIAGNOSIS NAMES
 
 
 http://172.28.37.105:3000

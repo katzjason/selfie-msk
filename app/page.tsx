@@ -5,7 +5,7 @@ import DemographicsSummary from '@/app/components/demographics-summary';
 import { useRouter } from 'next/navigation';
 import FormField from '@/app/components/form-field';
 import MenuIcon from '@/app/components/menu-icon'
-import { preconnect } from 'react-dom';
+import ResetButton from '@/app/components/reset-button';
 
 const sexOptions = ['Male', 'Female', 'Other'];
 const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95+"]
@@ -14,67 +14,43 @@ const raceOptions : string[] = ["Hispanic or Latino or Spanish Origin of any rac
 const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
 
 export default function Home() {
-  const router = useRouter();
-  //const { age, updatePatient } = usePatient();
-  const {
-    updatePatient,
-    age,
-    sex,
-    monkSkinTone,
-    fitzpatrick,
-    ita,
-    race,
-    newPatient,
-    biopsy,
-    mrn,
-    lesionID,
-    clinicalDiagnosis,
-    anatomicSite,
-  } = usePatient();
+    const router = useRouter();
+    const {
+        updatePatient,
+        age,
+        sex,
+        monkSkinTone,
+        fitzpatrick,
+        ita,
+        race,
+        newPatient,
+        biopsy,
+        mrn,
+        lesionID,
+        clinicalDiagnosis,
+        anatomicSite,
+    } = usePatient();
 
-  const [hasMounted, setHasMounted] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [showDemographics, setShowDemographics] = useState(true);
-  //const imageGroups = useMemo( () => groupImages(images), [images]);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [mraStudy, setMraStudy] = useState(true);
-  const [showRequired, setShowRequired] = useState(false);
-
-
-  useEffect(() => { setHasMounted(true); }, []);
-
-  const handleCaptureButton = () => {
-      inputRef.current?.click();
-      setShowDemographics(false);
-  };
-
-  const handleCaptureInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-
-    //   setImages((prev) => [
-    //   ...prev,
-    //       {   id: (`${Date.now()}-${Math.random()}`), 
-    //           url: url,
-    //           captureTime: new Date().toISOString(),
-    //           mrn: mrn ? mrn.toString() : undefined,
-    //           anatomicSite: anatomicSite ? anatomicSite : '',
-    //           lesionID: lesionID ? lesionID.toString() : undefined
-    //       }
-    //   ]);
-  };
-
-
-  const AddPhotoToGroup = (groupId: string) => {
-      handleCaptureButton();
-      handleCaptureInput;
-  }
+    const [hasMounted, setHasMounted] = useState(false);
+    const [images, setImages] = useState<string[]>([]);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const [showDemographics, setShowDemographics] = useState(true);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [mraStudy, setMraStudy] = useState(true);
+    const [showRequired, setShowRequired] = useState(false);
+    const [showReset, setShowReset] = useState(false);
 
     useEffect(() => {
-    const imgs = JSON.parse(localStorage.getItem('capturedImages') || '[]');
-    setImages(imgs);
+        setHasMounted(true);
+
+        const showDemographicsCached = localStorage.getItem('showDemographics');
+        if (showDemographicsCached !== null) {
+            setShowDemographics(JSON.parse(showDemographicsCached));
+        }
+        const mraStudyCached = localStorage.getItem('mraStudy');
+        if (mraStudyCached !== null) {
+            setMraStudy(JSON.parse(mraStudyCached));
+        }
     }, []);
 
 
@@ -94,10 +70,13 @@ export default function Home() {
         <div className="flex mb-5">
             {!showDemographics && (
                 <button
-                    onClick={() => setShowDemographics(true)}
+                    onClick={() => {
+                        setShowDemographics(true);
+                        localStorage.setItem('showDemographics', JSON.stringify(true));
+                    }}
                     className="bg-white shadow-lg rounded-lg px-2 py-2 transition-colors duration-200 flex items-center gap-2 w-full"
                     >
-                    {!showDemographics && (<DemographicsSummary />)}
+                    {!showDemographics && (<DemographicsSummary concise={mraStudy}/>)}
                 </button>
             )}
         </div>
@@ -106,6 +85,8 @@ export default function Home() {
         <div className="max-w-xl mx-auto grid grid-cols-1 gap-5 pl-10 pr-10">
             {showDemographics && (
             <div className="grid grid-cols-1 gap-5">
+
+                {!showReset && (<ResetButton />)}
 
                 <FormField label="Age" requiredFlag={showRequired && age == ""}
                     children={
@@ -239,6 +220,7 @@ export default function Home() {
                         onChange={(e) => updatePatient({ anatomicSite: e.target.value })}
                         className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && anatomicSite == "" ? "border-red-500" : "border-gray-200")}
                     >
+                    <option value="">Select anatomic site...</option>
                     {anatomicSites.map((option) => (
                     <option key={option} value={option}>
                         {option}
@@ -298,6 +280,7 @@ export default function Home() {
                     onClick={() => {
                         if(age && sex && clinicalDiagnosis && anatomicSite){
                             setShowDemographics(false);
+                            localStorage.setItem('showDemographics', JSON.stringify(false));
                             setShowRequired(false);
                             updatePatient({ newPatient: false })
                             router.push('capture');
@@ -324,6 +307,7 @@ export default function Home() {
                             className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
                             onClick={() => {
                                 setMraStudy(true);
+                                localStorage.setItem('mraStudy', JSON.stringify(true));
                                 setMenuOpen(false);
                             }}
                         >MRA Study
@@ -334,6 +318,7 @@ export default function Home() {
                             className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
                             onClick={() => {
                                 setMraStudy(false);
+                                localStorage.setItem('mraStudy', JSON.stringify(false));
                                 setMenuOpen(false);
                             }}
                         >Marghoob

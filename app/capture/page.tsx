@@ -26,19 +26,14 @@ export default function Capture() {
       description: "From 6 inches away, without any camera attachment",
     },
     {
-      id: "polarized-non-contact",
-      title: "Polarized, Non-Contact Photo",
-      description: "Connect the camera attachment and turn it on",
-    },
-    {
       id: "polarized-contact",
       title: "Polarized, Contact Photo",
-      description: "Make sure the lesion fills most of the frame.",
+      description: "Make sure the lesion fills most of the frame",
     },
     {
-      id: "uv",
-      title: "UV Photo",
-      description: "Make sure the lesion fills most of the frame.",
+      id: "non-polarized-contact",
+      title: "Non-Polarized, Contact Photo",
+      description: "Make sure the lesion fills most of the frame",
     },
     {
       id: "non-polarized-liquid-contact",
