@@ -16,6 +16,7 @@ interface PatientState {
     lesionID: string;
     clinicalDiagnosis: string;
     anatomicSite: string;
+    lesionCounter: number;
 }
 
 const defaultState = {
@@ -31,40 +32,35 @@ const defaultState = {
     lesionID: '',
     clinicalDiagnosis: '',
     anatomicSite: '',
+    lesionCounter: 1,
 }
 
+
+
+type PatientPatch =
+  | Partial<PatientState>
+  | ((prev: PatientState) => Partial<PatientState>);
+
 type PatientContextValue = PatientState & {
-    updatePatient: (patch: Partial<PatientState>) => void;
+  updatePatient: (patch: PatientPatch) => void;
 };
 
+// type PatientContextValue = PatientState & {
+//     updatePatient: (patch: Partial<PatientState>) => void;
+// };
+
 const PatientContext = createContext<PatientContextValue | null>(null);
-
-// const PatientContext = createContext({
-
-//     // DEMOGRAPHIC DATA
-//     age:  "", setAge: (age: string) => {},
-//     sex: "", setSex: (sex: string) => {},
-//     monkSkinTone: "", setMonkSkinTone: (monkSkinTone: string) => {},
-//     fitzpatrick: "", setFitzpatrick: (fitzpatrick: string) => {},
-//     ita: "", setIta: (ita: string) => {},
-//     race: "", setRace: (race: string) => {},
-//     newPatient: false, setNewPatient: (newPatient: boolean) => {},
-    
-//     // LESION-LEVEL DATA
-//     biopsy: false, setBiopsy: (biopsy: boolean) => {},
-//     mrn: "", setMrn: (mrn: string) => {},
-//     lesionID: "", setLesionID: (lesionID: string) => {},
-//     clinicalDiagnosis: "", setClinicalDiagnosis: (clinicalDiagnosis: string) => {},
-//     lesionType: "", setLesionType: (lesionType: string) => {},
-//     anatomicSite: "", setAnatomicSite: (anatomicSite: string) => {},
-// });
 
 export function PatientProvider({children} : {children: React.ReactNode}) {
     const [patientState, setPatientState] = useState(defaultState);
     const [hydrated, setHydrated] = useState(false);
 
-    const updatePatient = (patch: Partial<PatientState>) =>
-        setPatientState(prev => ({ ...prev, ...patch }));
+    const updatePatient = (patch: PatientPatch) => {
+        setPatientState(prev => ({
+            ...prev,
+            ...(typeof patch === "function" ? patch(prev) : patch),
+        }));
+    };
 
     useEffect(() => {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -104,49 +100,3 @@ export function usePatient() {
     }
     return ctx;
 }
-//export const usePatient = () => useContext(PatientContext);
-
-    // export const usePatient = () => useContext(PatientContext);
-
-
-
-
-    // DEMOGRAPHIC DATA
-//     const [age, setAge] = useState("");
-//     const [sex, setSex] = useState("");
-//     const [monkSkinTone, setMonkSkinTone] = useState("");
-//     const [fitzpatrick, setFitzpatrick] = useState("");
-//     const [ita, setIta] = useState("");
-//     const [race, setRace] = useState("");
-//     const [newPatient, setNewPatient] = useState(true);
-
-    
-//     const [biopsy, setBiopsy] = useState(false);
-//     const [mrn, setMrn] = useState("");
-//     const [lesionID, setLesionID] = useState("");
-//     const [clinicalDiagnosis, setClinicalDiagnosis] = useState("");
-//     const [lesionType, setLesionType] = useState("");
-//     const [anatomicSite, setAnatomicSite] = useState("");
-
-//     return (
-//         <PatientContext.Provider value={{
-//             age, setAge,
-//             sex, setSex,
-//             monkSkinTone, setMonkSkinTone,
-//             fitzpatrick, setFitzpatrick,
-//             ita, setIta,
-//             race, setRace,
-//             newPatient, setNewPatient,
-//             biopsy, setBiopsy,
-//             mrn, setMrn,
-//             lesionID, setLesionID,
-//             clinicalDiagnosis, setClinicalDiagnosis,
-//             lesionType, setLesionType,
-//             anatomicSite, setAnatomicSite,
-//         }}>{children}</PatientContext.Provider>
-//     );
-// }
-
-// export function usePatient() {
-//     return useContext(PatientContext);
-// }

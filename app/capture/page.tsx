@@ -6,6 +6,7 @@ import FooterButtons from '../components/footer-buttons';
 import CaptureButton from '@/app/components/capture-button';
 import CornerMarkers from '@/app/components/corner-markers';
 import { useToast } from '@/app/components/toast-provider';
+import { usePatient } from '@/app/contexts/patient';
 
 
 export default function Capture() {
@@ -17,6 +18,7 @@ export default function Capture() {
   const [zoom, setZoom] = useState<number | null>(null);
   const router = useRouter();
   const { showToast } = useToast();
+  const {lesionCounter, updatePatient} = usePatient();
 
 
   const photoSteps = [
@@ -176,19 +178,6 @@ export default function Capture() {
     });
   };
 
-
-
-
-
-
-
-
-
-
-
-
-  
-
   useEffect(() => {
     startCamera();
     document.body.style.overflow = "hidden"; // locks scrolling
@@ -218,7 +207,10 @@ export default function Capture() {
   const handleUpload = () => {
     // TODO write data to the database
 
-    showToast("Submitted photos", 3000);
+    showToast("Uploaded Lesion No. " + lesionCounter.toString(), 3000);
+    updatePatient(prev => ({
+      lesionCounter: prev.lesionCounter + 1
+    }));
     
     // Clear captured images from local storage
     localStorage.removeItem("capturedImages");

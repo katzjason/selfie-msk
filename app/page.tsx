@@ -58,10 +58,6 @@ export default function Home() {
             setShowReset(JSON.parse(showResetCached));
         }
 
-        // const showMenuOpenCached = localStorage.getItem('showMenuOpen');
-        // if (showMenuOpenCached !== null) {
-        //     setShowReset(JSON.parse(showMenuOpenCached));
-        // }
 
         const hasSeen = localStorage.getItem(FIRST_VISIT_KEY);
 
@@ -74,8 +70,6 @@ export default function Home() {
             setMenuOpen(false);
         }
     }, []);
-
-
 
 
   return (
@@ -125,7 +119,7 @@ export default function Home() {
                     children={
                         <select
                             value={age ?? ''}
-                            onChange={(e) => updatePatient({ age: e.target.value })}
+                            onChange={(e) => updatePatient({ age: e.target.value, lesionCounter: 1})}
                             className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && age == "" ? "border-red-500" : "border-gray-200")}
                         >
                         <option value="">Select age range...</option>
@@ -149,7 +143,7 @@ export default function Home() {
                                       value={option}
                                       className="w-4 h-4 accent-gray-500"
                                       checked={sex === option}
-                                      onChange={(e) => updatePatient({ sex: e.target.value })}
+                                      onChange={(e) => updatePatient({ sex: e.target.value, lesionCounter: 1 })}
                                   />
                                   <div>{option}</div>
                               </label>
@@ -164,7 +158,7 @@ export default function Home() {
                           type="text"
                           inputMode="numeric"
                           value={mrn ?? ''}
-                          onChange={(e) => updatePatient({ mrn: e.target.value })}
+                          onChange={(e) => updatePatient({ mrn: e.target.value, lesionCounter: 1 })}
                           placeholder="Enter patient MRN"
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                       />
@@ -175,7 +169,7 @@ export default function Home() {
                     children={
                         <select
                           value={monkSkinTone ?? ''}
-                          onChange={(e) => updatePatient({ monkSkinTone: e.target.value })}
+                          onChange={(e) => updatePatient({ monkSkinTone: e.target.value, lesionCounter: 1 })}
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
                         >
                         <option value="">Select type...</option>
@@ -190,7 +184,7 @@ export default function Home() {
                     children={
                         <select
                           value={fitzpatrick ?? ''}
-                          onChange={(e) => updatePatient({ fitzpatrick: e.target.value })}
+                          onChange={(e) => updatePatient({ fitzpatrick: e.target.value, lesionCounter: 1 })}
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
                         >
                         <option value="">Select type...</option>
@@ -207,7 +201,7 @@ export default function Home() {
                           type="text"
                           inputMode="numeric"
                           value={ita ?? ''}
-                          onChange={(e) => updatePatient({ ita: e.target.value })}
+                          onChange={(e) => updatePatient({ ita: e.target.value, lesionCounter: 1 })}
                           placeholder="Enter ITA value"
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                         />
@@ -218,7 +212,7 @@ export default function Home() {
                     children={
                         <select
                           value={race ?? ''}
-                          onChange={(e) => updatePatient({ race: e.target.value })}
+                          onChange={(e) => updatePatient({ race: e.target.value, lesionCounter: 1 })}
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer"
                         >
                         <option value="">Select self-reported race...</option>
