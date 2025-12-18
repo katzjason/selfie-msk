@@ -62,10 +62,6 @@ export default function Capture() {
       const [track] = mediaStream.getVideoTracks();
       trackRef.current = track || null;
 
-      // setTimeout(() => {
-      //   initZoomCapabilities();
-      // }, 0);
-
     } catch (err) {
       console.log("Error starting camera:",err);
     }
@@ -211,6 +207,7 @@ export default function Capture() {
     }
   }, [stream, stepIndex, imageArr]);
 
+
   const goToNextStep = () => {
     if(stepIndex == photoSteps.length-1){
       handleUpload();
@@ -227,9 +224,11 @@ export default function Capture() {
     localStorage.removeItem("capturedImages");
     setImageArr(Array(photoSteps.length).fill(""));
 
+    localStorage.setItem("showReset", "true");
     // Navigate back to page to capture next lesion
     router.back();
   }
+
 
   const goToPrevStep = () => {
     setStepIndex((prev) => Math.max(prev - 1, 0));

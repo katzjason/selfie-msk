@@ -51,6 +51,11 @@ export default function Home() {
         if (mraStudyCached !== null) {
             setMraStudy(JSON.parse(mraStudyCached));
         }
+
+        const showResetCached = localStorage.getItem('showReset');
+        if (showResetCached !== null) {
+            setShowReset(JSON.parse(showResetCached));
+        }
     }, []);
 
 
@@ -86,7 +91,7 @@ export default function Home() {
             {showDemographics && (
             <div className="grid grid-cols-1 gap-5">
 
-                {!showReset && (<ResetButton />)}
+                {showReset && (<ResetButton />)}
 
                 <FormField label="Age" requiredFlag={showRequired && age == ""}
                     children={
