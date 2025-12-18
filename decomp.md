@@ -24,6 +24,8 @@ Last Updated: 12/17/2025
 # TODO:
 
 ## Frontend
+- Force one of the skin types
+- Combine with Marghoob - benign/biopsy orders diagnoses
 - Slider sizing issue
 - Monk scale UI
 - Focus
