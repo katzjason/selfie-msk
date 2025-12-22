@@ -28,7 +28,6 @@ Last Updated: 12/17/2025
 - Combine with Marghoob - benign/biopsy orders diagnoses
 - Slider sizing issue
 - Monk scale UI
-- Focus
 - Anatomic Site Mannequin
 - Layout size optimization
 

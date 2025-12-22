@@ -30,7 +30,7 @@ async function assessQuality( dataUrl : string) {
       description += focus > 0.8 ? "Object appears well-centered " : "Object appears off-center "
       description += focus > 0.8 !== sharpness > 0.8 ? "but " : "and ";
       description += sharpness > 0.8 ? "edges are clear." : "edges are blurry";
-      score = (sharpness * 0.5 + focus * 0.5).toString();
+      score = ((sharpness * 0.5 + focus * 0.5) * 100).toString();
       return {description : description, score : score};
   })).catch((error) => {
     console.log("Error:", error);

@@ -94,7 +94,7 @@ export default function Home() {
         </div>
         
         {/* Expand Summary Button */}
-        <div className="flex mb-5">
+        <div className="flex mt-7 mb-5">
             {!showDemographics && (
                 <button
                     onClick={() => {
