@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import FormField from '@/app/components/form-field';
 import MenuIcon from '@/app/components/menu-icon'
 import ResetButton from '@/app/components/reset-button';
+import ToggleSwitch from '@/app/components/toggle-switch';
 
 const sexOptions = ['Male', 'Female', 'Other'];
 const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95+"]
-const mraDiagnoses : string[] = ["Angioma", "Benign keratosis (solar lentigo/SK/LPLK)", "Dermatofibroma", "Nevus",  "BCC",  "SCC",  "Melanoma", "Other"];
+const mraDiagnoses : string[] = ["Angioma", "Solar Lentigo", "SK","LPLK", "Dermatofibroma", "Nevus",  "BCC",  "SCC",  "Melanoma", "Other"];
 const raceOptions : string[] = ["White", "Hispanic/Latino/Spanish Origin of any race", "Black or African American", "Asian", "American Indian or Alaskan Native", "Native Hawaiian or Other Pacific Islander", "Two or more races"];
 const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
 const FIRST_VISIT_KEY = "hasSeenMenu";
@@ -152,14 +153,14 @@ export default function Home() {
                     }
                 ></FormField>
 
-                {(!mraStudy || (mraStudy && !newPatient) ) && (<FormField label="MRN" requiredFlag={false}
+                {!newPatient && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
                     children={
                         <input
                           type="text"
                           inputMode="numeric"
                           value={mrn ?? ''}
                           onChange={(e) => updatePatient({ mrn: e.target.value, lesionCounter: 1 })}
-                          placeholder="Enter patient MRN"
+                          placeholder="Enter patient study ID/MRN"
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                       />
                         }
@@ -180,7 +181,7 @@ export default function Home() {
                     }
                 ></FormField>
 
-                {!mraStudy && (<FormField label="Fitzpatrick Skin Type" requiredFlag={false}
+                <FormField label="Fitzpatrick Skin Type" requiredFlag={false}
                     children={
                         <select
                           value={fitzpatrick ?? ''}
@@ -193,9 +194,9 @@ export default function Home() {
                         ))}
                         </select>
                         }
-                ></FormField>)}
+                ></FormField>
 
-                {!mraStudy && (<FormField label="ITA Scale" requiredFlag={false}
+                {/* {!mraStudy && (<FormField label="ITA Scale" requiredFlag={false}
                     children={
                         <input
                           type="text"
@@ -206,9 +207,9 @@ export default function Home() {
                           className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                         />
                         }
-                ></FormField>)}
+                ></FormField>)} */}
 
-                {!mraStudy && (<FormField label="Self-reported Race" requiredFlag={false}
+                <FormField label="Self-reported Race" requiredFlag={false}
                     children={
                         <select
                           value={race ?? ''}
@@ -221,9 +222,31 @@ export default function Home() {
                         ))}
                         </select>
                     }
-                ></FormField>)}
+                ></FormField>
             </div>
             )}
+
+            <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                <ToggleSwitch
+                    checked={biopsy}
+                    onChange={() => updatePatient({ biopsy: !biopsy })}
+                    leftLabel="Benign"
+                    rightLabel="Biopsy"
+                />
+            </div>
+
+            {biopsy && newPatient && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
+                children={
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        value={mrn ?? ''}
+                        onChange={(e) => updatePatient({ mrn : e.target.value })}
+                        placeholder="Enter patient study ID/MRN"
+                        className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
+                    />
+                    }
+            ></FormField>)}
 
             <FormField label="Clinical Diagnosis" requiredFlag={showRequired && clinicalDiagnosis==""}
                 children={
@@ -257,7 +280,7 @@ export default function Home() {
                     }
             ></FormField>
 
-            <FormField label="Lesion ID" requiredFlag={showRequired && lesionID == ""}
+            <FormField label="Lesion ID" requiredFlag={showRequired && lesionID == "" && biopsy}
                 children={
                     <div>
                         <input
@@ -269,7 +292,7 @@ export default function Home() {
                             className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && lesionID == "" ? "border-red-500" : "border-gray-200")}
                         />
                         
-                        {mraStudy && (<label className="flex flex-row items-center gap-2 text-black mt-4" key="biopsy">
+                        {/* {mraStudy && (<label className="flex flex-row items-center gap-2 text-black mt-4" key="biopsy">
                             <input 
                                 type="checkbox"
                                 name="biopsy"
@@ -279,25 +302,11 @@ export default function Home() {
                                 onChange={() => {updatePatient({ biopsy: !biopsy })}}
                             />
                             <div>Biopsy</div>
-                        </label>)}
+                        </label>)} */}
                     </div>
                 }
             ></FormField>
 
-            {mraStudy && biopsy && newPatient && (<FormField label="MRN" requiredFlag={false}
-                    children={
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={mrn ?? ''}
-                          onChange={(e) => updatePatient({ mrn : e.target.value })}
-                          placeholder="Enter patient MRN"
-                          className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
-                      />
-                        }
-            ></FormField>)}
-
-            
           {/* Take Photos Button */}
           <div className="flex justify-center w-full mt-5 mb-10">
               <div className="w-1/2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col items-center">
@@ -305,7 +314,7 @@ export default function Home() {
                     type="button"
                     className="block text-sm font-semibold text-white uppercase tracking-wide"
                     onClick={() => {
-                        if(age && sex && clinicalDiagnosis && anatomicSite){
+                        if(age && sex && clinicalDiagnosis && anatomicSite && (biopsy == (lesionID != ""))){
                             setShowDemographics(false);
                             localStorage.setItem('showDemographics', JSON.stringify(false));
                             setShowRequired(false);
@@ -334,17 +343,17 @@ export default function Home() {
                 <nav className="flex flex-col gap-4 items-start">
                     <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
                         <button 
-                            className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
+                            className="text-md font-semibold text-gray-600 uppercase tracking-wide"
                             onClick={() => {
                                 setMraStudy(true);
                                 localStorage.setItem('mraStudy', JSON.stringify(true));
                                 setMenuOpen(false);
                                 localStorage.setItem("showMenuOpen", JSON.stringify(false));
                             }}
-                        >MRA Study
+                        >Export Data
                         </button>
                     </div>
-                    <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                    {/* <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
                         <button 
                             className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
                             onClick={() => {
@@ -355,7 +364,7 @@ export default function Home() {
                             }}
                         >Marghoob
                         </button>
-                    </div>
+                    </div> */}
                     {/* <div>Export Data</div> */}
                 </nav>
               </aside>
