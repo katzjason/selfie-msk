@@ -9,6 +9,37 @@ import { useToast } from '@/app/components/toast-provider';
 import { usePatient } from '@/app/contexts/patient';
 
 
+
+// Request for Image Quality using Kivanc's model
+async function assessQuality( dataUrl : string) {
+  
+  // Converting the dataUrl to a blob for more efficient transport
+  const blob = await (await fetch(dataUrl)).blob();
+  const formData = new FormData();
+  formData.append("image", blob, "capture.png");
+  let description = "";
+  let score = "";
+
+  const res = await fetch("/api/quality", {
+      method: "POST",
+      body: formData,
+  }).then((response) => (response.json())
+    .then((data) => {
+      const sharpness = data["Sharpness"]["confidence"];
+      const focus = data["Focus Area"]["confidence"];
+      description += focus > 0.8 ? "Object appears well-centered " : "Object appears off-center "
+      description += focus > 0.8 !== sharpness > 0.8 ? "but " : "and ";
+      description += sharpness > 0.8 ? "edges are clear." : "edges are blurry";
+      score = (sharpness * 0.5 + focus * 0.5).toString();
+      return {description : description, score : score};
+  })).catch((error) => {
+    console.log("Error:", error);
+    return {description : "Quality assessment failed", score : "0"};
+  });
+  return res;
+}
+
+
 export default function Capture() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const trackRef = useRef<MediaStreamTrack | null>(null);
@@ -19,7 +50,6 @@ export default function Capture() {
   const router = useRouter();
   const { showToast } = useToast();
   const {lesionCounter, updatePatient} = usePatient();
-
 
   const photoSteps = [
     {
@@ -45,7 +75,7 @@ export default function Capture() {
   ];
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [imageArr, setImageArr] = useState<string[]>(Array(photoSteps.length).fill(""));
+  const [imageArr, setImageArr] = useState<{url: string, description: string, score: number}[]>(Array(photoSteps.length).fill({url: "", description: "", score: 0}));
 
 
   const startCamera = async () => {
@@ -140,9 +170,15 @@ export default function Capture() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageDataUrl = canvas.toDataURL("image/png");
 
+    // Assess image quality
+    const qualityRes = await assessQuality(imageDataUrl)
+    const description = qualityRes.description;
+    const score = parseInt(qualityRes.score);
+      
+
     setImageArr((prev) => {
       const copy = [...prev];
-      copy[stepIndex] = imageDataUrl;
+      copy[stepIndex] = {url: imageDataUrl, description: description, score: score};
       return copy;
     });
 
@@ -214,7 +250,7 @@ export default function Capture() {
     
     // Clear captured images from local storage
     localStorage.removeItem("capturedImages");
-    setImageArr(Array(photoSteps.length).fill(""));
+    setImageArr(Array(photoSteps.length).fill({url: "", description: "", score: 0}));
 
     localStorage.setItem("showReset", "true");
     // Navigate back to page to capture next lesion
@@ -286,7 +322,7 @@ export default function Capture() {
             //disabled={stepIndex === photoSteps.length - 1}
             className="px-2 py-1 text-xs rounded-md border border-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            {stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex] ? "Next" : "Skip"}
+            {stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex].url != "" ? "Next" : "Skip"}
           </button>
         </div>
       </div>
@@ -294,8 +330,32 @@ export default function Capture() {
       <div className="relative w-full flex-1 max-h-[75vh] bg-black flex items-start justify-center">
         <div className="relative">
           <div className="relative">
-            {imageArr[stepIndex] ? (
-              <img src={imageArr[stepIndex]} className="w-full h-auto object-contain bg-black" />
+            {imageArr[stepIndex].url != "" ? (
+              <div>
+                <img src={imageArr[stepIndex].url} className="w-full h-auto object-contain bg-black" />
+                {/* <div className="text-white text-xs font-semibold flex justify-center">{imageArr[stepIndex].description}</div> */}
+                <div className="flex flex-row w-full">
+                  <div className="text-xs flex items-center justify-start flex font-semibold px-2 whitespace-nowrap">Quality Score</div>
+                  {/* Score Scale */}
+                  <div className="w-full pl-4 py-3 bg-black/50">
+                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full overflow-hidden transition-all ${ 
+                          imageArr[stepIndex].score > 90 
+                            ? 'bg-green-500' 
+                            : imageArr[stepIndex].score > 70 
+                            ? 'bg-yellow-500' 
+                            : 'bg-red-500' 
+                        }`} 
+                        style={{ width: `${Math.max(imageArr[stepIndex].score, 25)}%` }} 
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs flex justify-center">{imageArr[stepIndex].description}</div>
+              </div>
+              
+              
             ) : (
               <div>
                 <video ref={videoRef} autoPlay playsInline className="w-full h-auto object-contain bg-black" />
@@ -305,16 +365,15 @@ export default function Capture() {
             
           </div>
           
-          {imageArr[stepIndex] ? (
+          {imageArr[stepIndex].url != "" ? (
             <div className="flex justify-center mt-4">
               <button
                 className="bg-white uppercase shadow-lg rounded-lg px-6 py-2 text-black font-semibold text-md hover:bg-white transition-colors duration-200 border border-gray-300"
                 onClick={() => {
                   // Remove the image for this step
                   const arrCopy = [...imageArr];
-                  arrCopy[stepIndex] = '';
+                  arrCopy[stepIndex] = {url: "", description: "", score: 0} as any;
                   setImageArr(arrCopy);
-                  
                 }}
               >
                 Retake

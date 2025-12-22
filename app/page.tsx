@@ -58,7 +58,6 @@ export default function Home() {
             setShowReset(JSON.parse(showResetCached));
         }
 
-
         const hasSeen = localStorage.getItem(FIRST_VISIT_KEY);
 
         if (!hasSeen) {
@@ -70,6 +69,7 @@ export default function Home() {
             setMenuOpen(false);
         }
     }, []);
+
 
 
   return (
