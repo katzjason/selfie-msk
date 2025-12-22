@@ -1,54 +1,89 @@
-# Stage 1: Build the Next.js application
-FROM node:20-alpine AS builder
+# Stage 1: Build the Next.js application (Debian-based)
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage Docker cache
+# Install Python + venv + build tooling (some py deps may need compilation)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create venv and make it default
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy lockfiles
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-# Install dependencies
+
+# Python deps (cache-friendly)
+COPY image-quality/requirements.txt ./image-quality/requirements.txt
+
+# If requirements includes ultralytics/torch, installing torch from the CPU index is often more reliable:
+# (You can keep torch in requirements too; this just helps pip resolve wheels deterministically.)
+RUN pip install --no-cache-dir -U pip \
+ && pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu "torch>=1.8.0" \
+ && pip install --no-cache-dir -r image-quality/requirements.txt
+
+# Install JS deps
 RUN \
   if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-  elif [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable && pnpm install --frozen-lockfile; \
   else npm ci; fi
 
 COPY . .
 
-# Build the Next.js app in standalone mode for optimized production deployments
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# Stage 2: Create the production-ready image
-FROM node:20-alpine AS runner
+
+# Stage 2: Production image (Debian-based)
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
-# Set NODE_ENV for production
 ENV NODE_ENV=production
-
 ENV IMAGE_DIR=/data/images
 
-RUN apk add --no-cache su-exec
+# Install Python runtime deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 RUN mkdir -p /data/images
+
+RUN apt-get update && apt-get install -y --no-install-recommends gosu \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# copy your standalone output...
-# COPY --from=builder ...
+# Create non-root user
+RUN groupadd --system --gid 1001 nodejs \
+ && useradd  --system --uid 1001 --gid 1001 nextjs
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-
-# Create a non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy essential files from the builder stage
+# Copy Next standalone output
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/image-quality ./image-quality
 
-# Expose the port Next.js runs on
+# Install Python deps (prefer installing exactly what's in requirements.txt)
+# If ultralytics pulls torch, ensure torch can be resolved (CPU index line helps).
+RUN pip3 install --no-cache-dir -U pip \
+ && pip3 install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r image-quality/requirements.txt
+
 EXPOSE 3000
 
-# Start the Next.js application
-CMD ["node", "server.js"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# Next.js standalone usually starts with node server.js
+CMD ["node", "server.js", "start"]

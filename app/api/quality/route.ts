@@ -19,8 +19,7 @@ export async function POST(req: Request) {
     const imgPath = path.join(tmpDir, "image.png");
     await fs.writeFile(imgPath, bytes);
 
-    // Run python script
-    const py = spawn("python3", ["./image-quality/analyzer_v1.py", "--folder_path", tmpDir], {
+    const py = spawn("python3", ["image-quality/analyzer_v1.py", "--folder_path", tmpDir], {
       cwd: process.cwd(),
     });
 
@@ -29,7 +28,11 @@ export async function POST(req: Request) {
     py.stdout.on("data", (d) => (out += d.toString())); // Script prints to stdout
     py.stderr.on("data", (d) => (err += d.toString()));
 
-    const code: number = await new Promise((resolve) => py.on("close", resolve));
+    
+    const code: number = await new Promise((resolve, reject) => {
+      py.on("close", resolve);
+      py.on("error", reject);
+    });
   
     // Cleanup temp
     await fs.rm(tmpDir, { recursive: true, force: true });

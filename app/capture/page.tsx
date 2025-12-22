@@ -33,7 +33,6 @@ async function assessQuality( dataUrl : string) {
       score = ((sharpness * 0.5 + focus * 0.5) * 100).toString();
       return {description : description, score : score};
   })).catch((error) => {
-    console.log("Error:", error);
     return {description : "Quality assessment failed", score : "0"};
   });
   return res;
@@ -341,9 +340,9 @@ export default function Capture() {
                     <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                       <div 
                         className={`h-full rounded-full overflow-hidden transition-all ${ 
-                          imageArr[stepIndex].score > 90 
+                          imageArr[stepIndex].score > 80 
                             ? 'bg-green-500' 
-                            : imageArr[stepIndex].score > 70 
+                            : imageArr[stepIndex].score > 60 
                             ? 'bg-yellow-500' 
                             : 'bg-red-500' 
                         }`} 

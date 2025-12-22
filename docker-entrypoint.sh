@@ -7,7 +7,7 @@ mkdir -p /data/images
 # If not root, just continue.
 if [ "$(id -u)" = "0" ]; then
   chown -R node:node /data/images
-  exec su-exec node "$@"
+  exec gosu node "$@"
 fi
 
 exec "$@"

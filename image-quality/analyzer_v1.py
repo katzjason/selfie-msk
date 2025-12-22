@@ -485,7 +485,6 @@ def process_folder(folder_path: str, verbose: bool, move_files: bool, image_verb
     """
 
     # No external model required; proceed directly.
-
     logger.info(f"Processing images in folder: {folder_path}")
 
     # Define paths for sorted images
