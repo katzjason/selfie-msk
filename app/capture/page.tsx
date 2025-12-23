@@ -371,14 +371,14 @@ export default function Capture() {
         </div>
         
 
-        {!imageArr[stepIndex] && (
+        {!imageArr[stepIndex].url && (
           <div className="w-10 absolute right-0 top-1/2 -translate-y-1/2 flex flex-col items-center h-90 justify-between">
             <div className="text-white text-2xl font-semibold pointer-events-none">+</div>
             {/* Zoom Slider */}
             <input
               type="range"
               min={zoomRange?.min ?? 0}
-              max={zoomRange?.max ?? 5}
+              max={Math.min(zoomRange?.max ?? 5, 5)}
               step={0.1}
               value={zoom ?? 1}
               //onChange={(e) => handleZoomChange(Number(e.target.value))}
