@@ -10,7 +10,8 @@ import ToggleSwitch from '@/app/components/toggle-switch';
 
 const sexOptions = ['Male', 'Female', 'Other'];
 const ageOptions : string[] = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95+"]
-const mraDiagnoses : string[] = ["Angioma", "Solar Lentigo", "SK","LPLK", "Dermatofibroma", "Nevus",  "BCC",  "SCC",  "Melanoma", "Other"];
+const benignDiagnoses : string[] = ["Angioma", "Solar Lentigo", "SK","LPLK", "Dermatofibroma", "Nevus"];
+const malignantDiagnoses : string[] = ["BCC",  "SCC",  "Melanoma"];
 const raceOptions : string[] = ["White", "Hispanic/Latino/Spanish Origin of any race", "Black or African American", "Asian", "American Indian or Alaskan Native", "Native Hawaiian or Other Pacific Islander", "Two or more races"];
 const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
 const FIRST_VISIT_KEY = "hasSeenMenu";
@@ -88,14 +89,14 @@ export default function Home() {
                 />
 
             {/* Title */}
-            <div className="max-w-5xl mx-auto mb-8 absolute inset-3 pointer-events-none">
+            <div className="max-w-5xl mx-auto absolute inset-3 pointer-events-none">
                 <h1 className="text-2xl font-extrabold uppercase bg-gradient-to-br from-yellow-200 to-pink-500 bg-clip-text text-transparent text-center">Selfie App</h1>
                 <h2 className="text-xs text-white text-center">Streamlined lesion photography</h2>
             </div>
         </div>
         
         {/* Expand Summary Button */}
-        <div className="flex mt-7 mb-5">
+        <div className="flex mb-5">
             {!showDemographics && (
                 <button
                     onClick={() => {
@@ -166,7 +167,7 @@ export default function Home() {
                         }
                 ></FormField>)}
 
-                <FormField label="Monk Skin Tone" requiredFlag={false}
+                <FormField label="Monk Skin Tone" requiredFlag={showRequired && (monkSkinTone == "" && fitzpatrick == "")}
                     children={
                         <select
                           value={monkSkinTone ?? ''}
@@ -229,7 +230,7 @@ export default function Home() {
             <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
                 <ToggleSwitch
                     checked={biopsy}
-                    onChange={() => updatePatient({ biopsy: !biopsy })}
+                    onChange={() => updatePatient({ biopsy: !biopsy, lesionID: '' })}
                     leftLabel="Benign"
                     rightLabel="Biopsy"
                 />
@@ -256,7 +257,7 @@ export default function Home() {
                         className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && clinicalDiagnosis=="" ? "border-red-500" : "border-gray-200")}
                     >
                     <option value="">Select diagnosis...</option>
-                    {mraDiagnoses.map((type) => (
+                    {(biopsy ? (malignantDiagnoses.concat(benignDiagnoses).concat(["Other"])) : (benignDiagnoses.concat(malignantDiagnoses).concat(["Other"]))).map((type) => (
                     <option key={type} value={type}>{type}</option>
                     ))}
                     </select>
@@ -280,7 +281,7 @@ export default function Home() {
                     }
             ></FormField>
 
-            <FormField label="Lesion ID" requiredFlag={showRequired && lesionID == "" && biopsy}
+            <FormField label="Lesion ID" requiredFlag={showRequired && lesionID == '' && biopsy}
                 children={
                     <div>
                         <input
@@ -289,7 +290,7 @@ export default function Home() {
                             value={lesionID ?? ''}
                             onChange={(e) => updatePatient({ lesionID: e.target.value })}
                             placeholder="Enter patient lesion ID"
-                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && lesionID == "" ? "border-red-500" : "border-gray-200")}
+                            className={"w-full px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer " + (showRequired && lesionID == "" && biopsy ? "border-red-500" : "border-gray-200")}
                         />
                         
                         {/* {mraStudy && (<label className="flex flex-row items-center gap-2 text-black mt-4" key="biopsy">
@@ -314,7 +315,7 @@ export default function Home() {
                     type="button"
                     className="block text-sm font-semibold text-white uppercase tracking-wide"
                     onClick={() => {
-                        if(age && sex && clinicalDiagnosis && anatomicSite && (biopsy == (lesionID != ""))){
+                        if(age && sex && clinicalDiagnosis && anatomicSite && (lesionID != '' || !biopsy) && (monkSkinTone || fitzpatrick)){
                             setShowDemographics(false);
                             localStorage.setItem('showDemographics', JSON.stringify(false));
                             setShowRequired(false);

@@ -54,7 +54,7 @@ export default function Capture() {
     {
       id: "closeup",
       title: "Close-up Photo",
-      description: "From 6 inches away, without any camera attachment",
+      description: "From ~6 inches away, without any camera attachment",
     },
     {
       id: "polarized-contact",
@@ -158,13 +158,13 @@ export default function Capture() {
   const handleCapture = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas) return;
+    if (!video || !canvas) return 0;
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) return 0;
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageDataUrl = canvas.toDataURL("image/png");
@@ -185,9 +185,8 @@ export default function Capture() {
         // const blob = dataUrlToBlob(imageDataUrl); //  converting data URL to Blob
         // const { url } = await uploadImage(blob);
 
+    return score;
   };
-
-
 
   const rafRef = useRef<number | null>(null);
   const pendingZoomRef = useRef<number | null>(null);
@@ -306,84 +305,68 @@ export default function Capture() {
             {photoSteps[stepIndex].description}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={goToPrevStep}
-            disabled={stepIndex === 0}
-            className="px-2 py-1 text-xs rounded-md border border-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            Prev
-          </button>
-          <button
-            type="button"
-            onClick={goToNextStep}
-            //disabled={stepIndex === photoSteps.length - 1}
-            className="px-2 py-1 text-xs rounded-md border border-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex].url != "" ? "Next" : "Skip"}
-          </button>
-        </div>
       </div>
 
       <div className="relative w-full flex-1 max-h-[75vh] bg-black flex items-start justify-center">
         <div className="relative">
-          <div className="relative">
-            {imageArr[stepIndex].url != "" ? (
+          <div className="relative bg-blue-500">
+            {imageArr[stepIndex].url != "" ? ( // VIEWING IMAGE ALREADY TAKEN
               <div>
                 <img src={imageArr[stepIndex].url} className="w-full h-auto object-contain bg-black" />
-                {/* <div className="text-white text-xs font-semibold flex justify-center">{imageArr[stepIndex].description}</div> */}
-                <div className="flex flex-row w-full">
-                  <div className="text-xs flex items-center justify-start flex font-semibold px-2 whitespace-nowrap">Quality Score</div>
-                  {/* Score Scale */}
-                  <div className="w-full pl-4 py-3 bg-black/50">
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full overflow-hidden transition-all ${ 
-                          imageArr[stepIndex].score > 80 
-                            ? 'bg-green-500' 
-                            : imageArr[stepIndex].score > 60 
-                            ? 'bg-yellow-500' 
-                            : 'bg-red-500' 
-                        }`} 
-                        style={{ width: `${Math.max(imageArr[stepIndex].score, 25)}%` }} 
-                      />
+                {/* Quality Score */}
+                <div className="absolute bottom-0 flex flex-col w-full bg-black/50">
+
+              
+                  <div className="flex flex-row w-full">
+                    <div className="text-xs flex items-center justify-start flex font-semibold pt-2 px-2 whitespace-nowrap">Quality Score</div>
+                    
+                    <div className="w-full pl-4 pb-1 pt-3 pr-2">
+                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full overflow-hidden transition-all ${ 
+                            imageArr[stepIndex].score > 80 
+                              ? 'bg-green-500' 
+                              : imageArr[stepIndex].score > 60 
+                              ? 'bg-yellow-500' 
+                              : 'bg-red-500' 
+                          }`} 
+                          style={{ width: `${Math.max(imageArr[stepIndex].score, 25)}%` }} 
+                        />
+                      </div>
                     </div>
+                    
                   </div>
+                  <div className="text-xs flex justify-center w-full pb-1">{imageArr[stepIndex].description}</div>
                 </div>
-                <div className="text-xs flex justify-center">{imageArr[stepIndex].description}</div>
+                
               </div>
-              
-              
             ) : (
               <div>
                 <video ref={videoRef} autoPlay playsInline className="w-full h-auto object-contain bg-black" />
                 <CornerMarkers />
               </div>
             )}        
-            
           </div>
-          
-          {imageArr[stepIndex].url != "" ? (
-            <div className="flex justify-center mt-4">
-              <button
-                className="bg-white uppercase shadow-lg rounded-lg px-6 py-2 text-black font-semibold text-md hover:bg-white transition-colors duration-200 border border-gray-300"
-                onClick={() => {
-                  // Remove the image for this step
-                  const arrCopy = [...imageArr];
-                  arrCopy[stepIndex] = {url: "", description: "", score: 0} as any;
-                  setImageArr(arrCopy);
-                }}
-              >
-                Retake
-              </button>
-            </div>
-          ) : (
+
             <CaptureButton clickCallback={async () => {
-              await handleCapture();
-              goToNextStep();
-            }}/>
-          )}
+              const score = await handleCapture();
+              if(score > 80 && stepIndex != imageArr.length-1){
+                goToNextStep();
+              }
+              }}
+              nextCallback={goToNextStep}
+              prevCallback={goToPrevStep}
+              disablePrev={stepIndex === 0}
+              disableNext={stepIndex === photoSteps.length - 1}
+              nextText={stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex].url != "" ? "Next" : "Skip"}
+              retake={imageArr[stepIndex].url != ""}
+              retakeCallback={() => {
+                // Remove the image for this step
+                const arrCopy = [...imageArr];
+                arrCopy[stepIndex] = {url: "", description: "", score: 0} as any;
+                setImageArr(arrCopy);
+              }}
+            />
           
         </div>
         
@@ -395,7 +378,7 @@ export default function Capture() {
             <input
               type="range"
               min={zoomRange?.min ?? 0}
-              max={zoomRange?.max ?? 10}
+              max={zoomRange?.max ?? 5}
               step={0.1}
               value={zoom ?? 1}
               //onChange={(e) => handleZoomChange(Number(e.target.value))}
