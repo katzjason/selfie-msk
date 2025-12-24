@@ -130,6 +130,10 @@ const diagnosisDict: Record<string, string> = {
   Other: "Other",
 };
 
+const fitzpatrickDict: Record<string, number> = {
+  "I": 1, "II": 2, "III": 3, "IV": 4, "V": 5, "VI": 6
+}
+
 function safeDiagnosis(raw: string) {
   return diagnosisDict[raw] ?? "Other";
 }
@@ -161,7 +165,7 @@ export async function POST(req: Request) {
     if (!anatomic_site) return NextResponse.json({ ok: false, error: "anatomic_site is required" }, { status: 400 });
 
     const monk_skin_tone = data.get("monk_skin_tone") ? Number(data.get("monk_skin_tone")) : null;
-    const fitzpatrick_skin_type = data.get("fitzpatrick") ? Number(data.get("fitzpatrick")) : null;
+    const fitzpatrick_skin_type = fitzpatrickDict[String(data.get("fitzpatrick"))] ? Number(fitzpatrickDict[String(data.get("fitzpatrick"))]) : null;
     const self_reported_race = data.get("race") ? String(data.get("race")) : null;
 
     const clinical_diagnosis = safeDiagnosis(String(data.get("clinical_diagnosis") ?? "").trim());
@@ -206,6 +210,14 @@ export async function POST(req: Request) {
 
     await client.query("BEGIN");
     console.log("BEGINNING QUERY");
+
+    const where = await client.query(`
+      SELECT inet_server_addr() as server_ip,
+            inet_server_port() as server_port,
+            current_database() as db,
+            current_user as user;
+    `);
+    console.log("DB TARGET:", where.rows[0]);
 
     await client.query(
       `

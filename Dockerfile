@@ -79,14 +79,26 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/image-quality ./image-quality
 
+# Copy the venv that already has all deps installed
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Install Python deps (prefer installing exactly what's in requirements.txt)
 # If ultralytics pulls torch, ensure torch can be resolved (CPU index line helps).
-RUN pip3 install --no-cache-dir -U pip \
- && pip3 install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r image-quality/requirements.txt
+RUN /opt/venv/bin/python -m pip install --no-cache-dir -U pip \
+ && /opt/venv/bin/python -m pip install --no-cache-dir -r image-quality/requirements.txt
+
+
+ RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+ && rm -rf /var/lib/apt/lists/*
+# RUN pip3 install --no-cache-dir -U pip \
+#  && pip3 install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r image-quality/requirements.txt
 
 EXPOSE 3000
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Next.js standalone usually starts with node server.js
-CMD ["node", "server.js", "start"]
+CMD ["node", "server.js"]

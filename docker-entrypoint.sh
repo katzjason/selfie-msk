@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+echo "PATH=$PATH"
+which python3 || true
+python3 -c "import sys; print(sys.executable)" || true
+/opt/venv/bin/python3 -c "import sys; print(sys.executable)" || true
+
 IMAGE_DIR="${IMAGE_DIR:-/data/images}"
 
 # Ensure the directory exists (even if IMAGE_DIR is changed)

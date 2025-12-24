@@ -1,18 +1,20 @@
 "use client"
+import { useRouter } from "next/dist/client/components/navigation";
 
 export default function CaptureButton({clickCallback, nextCallback, prevCallback, disablePrev, disableNext, nextText, retake, retakeCallback}: 
     {clickCallback: () => void, nextCallback: () => void, prevCallback: () => void, retakeCallback: () => void,
          disablePrev: boolean, disableNext: boolean, nextText: string, retake: boolean}) {
+    const router = useRouter();
     return (
         <div className="relative bg-black h-19 flex items-center justify-center">
             <div className="flex items-center gap-40">
                 <button
                     type="button"
-                    onClick={prevCallback}
-                    disabled={disablePrev}
+                    onClick={() => { disablePrev ? router.back() : prevCallback(); }}
+                    disabled={false}
                     className="w-24 py-1 text-md rounded-md border border-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                    Prev
+                    {disablePrev ? "Back" : "Prev"}
                 </button>
                 <button
                     type="button"

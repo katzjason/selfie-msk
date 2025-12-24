@@ -330,16 +330,19 @@ export default function Capture() {
       method: "POST",
       body: formData
     });
-    showToast("Uploaded Lesion No. " + lesionCounter.toString(), 3000);
-    updatePatient(prev => ({
-      lesionCounter: prev.lesionCounter + 1
-    }));
+    if(res.status == 200){
+      showToast("Uploaded Lesion No. " + lesionCounter.toString(), 3000);
+      updatePatient(prev => ({
+        lesionCounter: prev.lesionCounter + 1
+      }));
+      // Clear captured images from local storage
+      localStorage.removeItem("capturedImages");
+      setImageArr(Array(photoSteps.length).fill({url: "", description: "", score: 0}));
+      localStorage.setItem("showReset", "true");
+    } else {
+      showToast("Uknown Upload Failure", 3000);
+    }
     
-    // Clear captured images from local storage
-    localStorage.removeItem("capturedImages");
-    setImageArr(Array(photoSteps.length).fill({url: "", description: "", score: 0}));
-
-    localStorage.setItem("showReset", "true");
     // Navigate back to page to capture next lesion
     router.back();
   }

@@ -19,8 +19,13 @@ export async function POST(req: Request) {
     const imgPath = path.join(tmpDir, "image.png");
     await fs.writeFile(imgPath, bytes);
 
-    const py = spawn("python3", ["image-quality/analyzer_v1.py", "--folder_path", tmpDir], {
+    // const py = spawn("python3", ["image-quality/analyzer_v1.py", "--folder_path", tmpDir], {
+    //   cwd: process.cwd(),
+    // });
+
+    const py = spawn("/opt/venv/bin/python3", ["image-quality/analyzer_v1.py", "--folder_path", tmpDir], {
       cwd: process.cwd(),
+      env: { ...process.env, PATH: `/opt/venv/bin:${process.env.PATH}` },
     });
 
     let out = "";
