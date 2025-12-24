@@ -12,6 +12,19 @@ services:
         depends_on:
         - db
 
+    caddy:
+        image: caddy:2
+        ports:
+        - "0.0.0.0:443:443"
+        - "0.0.0.0:80:80"
+        volumes:
+        - ./Caddyfile:/etc/caddy/Caddyfile:ro
+        - ./certs:/certs:ro
+        - caddy_data:/data
+        - caddy_config:/config
+        depends_on:
+        - web
+
     db:
         image: postgres:16-alpine
         environment:
@@ -27,3 +40,5 @@ services:
 volumes:
   selfie_images:
   postgres_data:
+  caddy_data:
+  caddy_config:

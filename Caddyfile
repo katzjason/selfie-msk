@@ -1,0 +1,14 @@
+{
+  servers {
+    protocols h1 h2
+  }
+}
+
+:443 {
+  tls /certs/selfie.crt /certs/selfie.key
+  reverse_proxy web:3000
+}
+
+:80 {
+  redir https://{host}{uri}
+}

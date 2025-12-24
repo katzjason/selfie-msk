@@ -64,7 +64,7 @@ export default function Home() {
 
         if (!hasSeen) {
             // first ever mount in this browser
-            setMenuOpen(true);
+            setMenuOpen(false);
             localStorage.setItem(FIRST_VISIT_KEY, "true");
         } else {
             // not first visit -> keep closed
@@ -342,8 +342,8 @@ export default function Home() {
               />
               <aside className="fixed top-0 left-0 h-full w-64 bg-gradient-to-br from-gray-200 to-gray-500 shadow-lg z-50 flex flex-col p-6 transition-transform duration-300">
                 <nav className="flex flex-col gap-4 items-start">
-                    <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
-                        <button 
+                    {/* <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black"> */}
+                        {/* <button 
                             className="text-md font-semibold text-gray-600 uppercase tracking-wide"
                             onClick={() => {
                                 setMraStudy(true);
@@ -352,8 +352,8 @@ export default function Home() {
                                 localStorage.setItem("showMenuOpen", JSON.stringify(false));
                             }}
                         >Export Data
-                        </button>
-                    </div>
+                        </button> */}
+                    {/* </div> */}
                     {/* <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
                         <button 
                             className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
