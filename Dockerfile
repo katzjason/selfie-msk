@@ -58,7 +58,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN mkdir -p /data/images
+USER root
+RUN mkdir -p /data/images \
+ && chown -R 1001:1001 /data
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends gosu \
  && rm -rf /var/lib/apt/lists/*

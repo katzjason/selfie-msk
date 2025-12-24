@@ -82,3 +82,24 @@ http://172.28.37.105:3000
 ## Questions
 - Alignment of data fields
 - Exact order/types of photos taken
+
+
+docker compose exec db psql -U app -d selfie -c "SELECT 1;"
+docker compose exec db psql -U app -d selfie -c "\dt"
+docker compose exec db psql -U app -d selfie -c "SELECT 1;"
+
+curl -X POST http://localhost:3000/api/upload \
+  -F "patient_id=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" \
+  -F "age=25-29" \
+  -F "sex=Male" \
+  -F "anatomic_site=Head/Neck" \
+  -F "clinical_diagnosis=Basal cell carcinoma" \
+  -F "biopsy=false" \
+  -F "device_type=test" \
+  -F "os=test" \
+  -F "image_types=close-up" \
+  -F "images=@/home/jkatz/selfie/selfie1/public/images/sk_80b51079-c58f-4bfb-8267-c3c798944f26.png"
+
+  ls -l /home/jkatz/selfie/selfie1/public/images/sk_80b51079-c58f-4bfb-8267-c3c798944f26.png
+
+  postgresql://app:app_password@db:5432/selfie

@@ -6,7 +6,7 @@ services:
         environment:
         - IMAGE_DIR=/data/images
         - NODE_ENV=production
-        - DATABASE_URL= postgresql://app:app_password@db:5432/selfie
+        - DATABASE_URL=postgresql://app:app_password@db:5432/selfie
         volumes:
         - selfie_images:/data/images
         depends_on:

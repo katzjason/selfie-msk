@@ -10,6 +10,7 @@ import { usePatient } from '@/app/contexts/patient';
 
 
 
+
 // Request for Image Quality using Kivanc's model
 async function assessQuality( dataUrl : string) {
   
@@ -49,10 +50,11 @@ export default function Capture() {
   const router = useRouter();
   const { showToast } = useToast();
   const {lesionCounter, updatePatient} = usePatient();
+  const patient = usePatient();
 
   const photoSteps = [
     {
-      id: "closeup",
+      id: "close-up",
       title: "Close-up Photo",
       description: "From ~6 inches away, without any camera attachment",
     },
@@ -74,7 +76,9 @@ export default function Capture() {
   ];
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [imageArr, setImageArr] = useState<{url: string, description: string, score: number}[]>(Array(photoSteps.length).fill({url: "", description: "", score: 0}));
+  const [imageArr, setImageArr] = useState<{url: string, description: string, score: number, captureTime: string}[]>(
+    Array(photoSteps.length).fill({url: "", description: "", score: 0, captureTime: ""})
+  );
 
 
   const startCamera = async () => {
@@ -173,17 +177,13 @@ export default function Capture() {
     const qualityRes = await assessQuality(imageDataUrl)
     const description = qualityRes.description;
     const score = parseInt(qualityRes.score);
-      
+    const captureTime = new Date().toISOString();
 
     setImageArr((prev) => {
       const copy = [...prev];
-      copy[stepIndex] = {url: imageDataUrl, description: description, score: score};
+      copy[stepIndex] = {url: imageDataUrl, description: description, score: score, captureTime};
       return copy;
     });
-
-        // FIX THIS API CALL!!!!
-        // const blob = dataUrlToBlob(imageDataUrl); //  converting data URL to Blob
-        // const { url } = await uploadImage(blob);
 
     return score;
   };
@@ -230,6 +230,23 @@ export default function Capture() {
     }
   }, [stream, stepIndex, imageArr]);
 
+  function getDeviceCategory() {
+    const ua = navigator.userAgent;
+    if (/ipad|tablet/i.test(ua)) return "tablet";
+    if (/mobile|iphone|android/i.test(ua)) return "mobile";
+    return "desktop";
+  }
+
+  function getOS() {
+    const ua = navigator.userAgent;
+
+    if (/iphone|ipad|ipod/i.test(ua)) return "iOS";
+    if (/android/i.test(ua)) return "Android";
+    if (/win/i.test(ua)) return "Windows";
+    if (/mac/i.test(ua)) return "macOS";
+    if (/linux/i.test(ua)) return "Linux";
+    return "Unknown";
+  }
 
   const goToNextStep = () => {
     if(stepIndex == photoSteps.length-1){
@@ -238,9 +255,81 @@ export default function Capture() {
     setStepIndex((prev) => Math.min(prev + 1, photoSteps.length - 1));
   };
 
-  const handleUpload = () => {
-    // TODO write data to the database
+  const handleUpload = async () => {
+    // Assemble form data
+    let formData = new FormData();
 
+    // Adding saved patient/lesion data
+    formData.append("age", patient.age);
+    formData.append("sex", patient.sex);
+    formData.append("monk_skin_tone", patient.monkSkinTone);
+    formData.append("fitzpatrick", patient.fitzpatrick);
+    formData.append("race", patient.race);
+    formData.append("biopsy", patient.biopsy.toString());
+    formData.append("patient_id", patient.mrn);
+    formData.append("lesion_id", patient.lesionID);
+    formData.append("clinical_diagnosis", patient.clinicalDiagnosis); 
+    formData.append("anatomic_site", patient.anatomicSite);
+
+    // Adding image details
+    formData.append("device_type", getDeviceCategory());
+    formData.append("os", getOS());
+
+    type ImageMeta = { code: string; capture_time: string; filename: string };
+    const metas: ImageMeta[] = [];
+
+    const cleanDiagnosis = patient.clinicalDiagnosis
+      .replace(/[^a-z0-9]/gi, "_")
+      .toLowerCase();
+
+    for (let idx = 0; idx < imageArr.length; idx++) {
+      const img = imageArr[idx];
+      if (!img?.url) continue;
+
+      // Works for data: URLs and blob: URLs
+      const blob = await (await fetch(img.url)).blob();
+
+      const ext = blob.type === "image/png"
+        ? "png"
+        : blob.type === "image/webp"
+          ? "webp"
+          : "jpg";
+
+      const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
+
+      // Append binary part
+      formData.append("images", blob, filename);
+
+      // Track metadata aligned with the appended file
+      metas.push({
+        code: photoSteps[idx].id,
+        capture_time: img.captureTime,
+        filename,
+      });
+    }
+
+    formData.append("metas", JSON.stringify(metas));
+
+
+    // let finalImages : {url: string, code: string, capture_time: string}[] = [];
+    // imageArr.forEach(async (img, idx) => {
+    //   if(img.url){
+    //     const blob = await (await fetch(img.url)).blob();
+    //     const ext = blob.type.split("/")[1] || "jpg";
+    //     const cleanDiagnosis = patient.clinicalDiagnosis.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    //     const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
+    //     let metadata = {"url" : img.url, "code" : photoSteps[idx].id, "capture_time" : img.captureTime}
+    //     finalImages.push(metadata);
+    //   }
+    // })
+
+    // formData.append("images", JSON.stringify(finalImages));
+
+    // POST request to /api/upload
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData
+    });
     showToast("Uploaded Lesion No. " + lesionCounter.toString(), 3000);
     updatePatient(prev => ({
       lesionCounter: prev.lesionCounter + 1
@@ -357,7 +446,8 @@ export default function Capture() {
               nextCallback={goToNextStep}
               prevCallback={goToPrevStep}
               disablePrev={stepIndex === 0}
-              disableNext={stepIndex === photoSteps.length - 1}
+              //disableNext={stepIndex === photoSteps.length - 1}
+              disableNext={false}
               nextText={stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex].url != "" ? "Next" : "Skip"}
               retake={imageArr[stepIndex].url != ""}
               retakeCallback={() => {

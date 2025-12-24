@@ -35,3 +35,9 @@ coverage/
 # Temporary files or directories
 *.bak
 *.swp
+
+.venv
+__pycache__
+*.pyc
+node_modules
+.git
