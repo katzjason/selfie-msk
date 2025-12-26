@@ -56,7 +56,7 @@ export default function Home() {
         }
 
         const showResetCached = localStorage.getItem('showReset');
-        if (showResetCached !== null) {
+        if (showResetCached !== undefined && showResetCached !== null) {
             setShowReset(JSON.parse(showResetCached));
         }
 
@@ -102,6 +102,7 @@ export default function Home() {
                 <button
                     onClick={() => {
                         setShowDemographics(true);
+                        setShowReset(true);
                         localStorage.setItem('showDemographics', JSON.stringify(true));
                     }}
                     className="bg-white shadow-lg rounded-lg px-2 py-2 transition-colors duration-200 flex items-center gap-2 w-full"
