@@ -256,14 +256,15 @@ export default function Capture() {
     return "Unknown";
   }
 
-  const goToNextStep = () => {
+  const goToNextStep = (options?: { slide?: boolean }) => {
+    const { slide = false } = options ?? {};
     if(stepIndex == photoSteps.length-1){
       handleUpload();
       return;
     }
     
     // Trigger slide-out animation
-    setIsSliding(true);
+    setIsSliding(slide);
     
     // Wait for animation to complete, then move to next step
     setTimeout(() => {
@@ -328,20 +329,6 @@ export default function Capture() {
     formData.append("metas", JSON.stringify(metas));
 
 
-    // let finalImages : {url: string, code: string, capture_time: string}[] = [];
-    // imageArr.forEach(async (img, idx) => {
-    //   if(img.url){
-    //     const blob = await (await fetch(img.url)).blob();
-    //     const ext = blob.type.split("/")[1] || "jpg";
-    //     const cleanDiagnosis = patient.clinicalDiagnosis.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    //     const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
-    //     let metadata = {"url" : img.url, "code" : photoSteps[idx].id, "capture_time" : img.captureTime}
-    //     finalImages.push(metadata);
-    //   }
-    // })
-
-    // formData.append("images", JSON.stringify(finalImages));
-
     // POST request to /api/upload
     const res = await fetch("/api/upload", {
       method: "POST",
@@ -370,7 +357,6 @@ export default function Capture() {
   };
 
   
-
   useEffect(() => {
     const stored = localStorage.getItem("capturedImages");
     if (!stored) return;
@@ -397,10 +383,10 @@ export default function Capture() {
 
 
   return (
-    <div className="flex flex-col min-h-[100dvh] pt-[env(safe-area-inset-top)] justify-center">
+    <div className="flex flex-col min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] justify-center">
       {/* Hidden canvas for image capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      {!!stream && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center">
+      {!!stream && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center pb-4">
       {/* Instruction bar at top */}
       <div className="mb-2 rounded-xl bg-black/70 text-white px-3 py-2 flex items-center justify-between">
         <div className="flex flex-col">
@@ -416,8 +402,8 @@ export default function Capture() {
         </div>
       </div>
 
-      <div className="relative w-full flex-1 max-h-[75vh] bg-black flex items-start justify-center overflow-hidden">
-        <div className="relative">
+      <div className="relative w-full flex-1 bg-black flex items-start justify-center overflow-visible pb-24">
+        <div className="relative max-h-[calc(100dvh-200px)]" style={{ maxHeight: 'calc(100dvh - 200px)' }}>
           <div className="relative">
             {imageArr[stepIndex].url != "" ? ( // VIEWING IMAGE ALREADY TAKEN
               <div className={`transition-transform duration-300 ${
@@ -483,7 +469,7 @@ export default function Capture() {
                 // Wait for the 1-second image display, then auto-advance if quality is good
                 if(score > 80 && stepIndex != imageArr.length-1){
                   setTimeout(() => {
-                    goToNextStep();
+                    goToNextStep({ slide: true });
                   }, 1000);
                 }
               }}

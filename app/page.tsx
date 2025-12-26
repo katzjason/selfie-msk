@@ -112,7 +112,7 @@ export default function Home() {
         </div>
 
         {/* Form Grid */}
-        <div className="max-w-xl mx-auto grid grid-cols-1 gap-5 pl-10 pr-10 mt-10">
+        <div className="max-w-xl mx-auto grid grid-cols-1 gap-5 pl-10 pr-10">
             {showDemographics && (
             <div className="grid grid-cols-1 gap-5">
 
