@@ -10,7 +10,6 @@ import { usePatient } from '@/app/contexts/patient';
 
 
 
-
 // Request for Image Quality using Kivanc's model
 async function assessQuality( dataUrl : string) {
   
@@ -79,6 +78,9 @@ export default function Capture() {
   const [imageArr, setImageArr] = useState<{url: string, description: string, score: number, captureTime: string}[]>(
     Array(photoSteps.length).fill({url: "", description: "", score: 0, captureTime: ""})
   );
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [showCapturedImage, setShowCapturedImage] = useState(false);
+  const [isSliding, setIsSliding] = useState(false);
 
 
   const startCamera = async () => {
@@ -185,6 +187,12 @@ export default function Capture() {
       return copy;
     });
 
+    // Show the captured image for 1 second
+    setShowCapturedImage(true);
+    setTimeout(() => {
+      setShowCapturedImage(false);
+    }, 1000);
+
     return score;
   };
 
@@ -251,8 +259,17 @@ export default function Capture() {
   const goToNextStep = () => {
     if(stepIndex == photoSteps.length-1){
       handleUpload();
+      return;
     }
-    setStepIndex((prev) => Math.min(prev + 1, photoSteps.length - 1));
+    
+    // Trigger slide-out animation
+    setIsSliding(true);
+    
+    // Wait for animation to complete, then move to next step
+    setTimeout(() => {
+      setStepIndex((prev) => Math.min(prev + 1, photoSteps.length - 1));
+      setIsSliding(false);
+    }, 300);
   };
 
   const handleUpload = async () => {
@@ -399,11 +416,13 @@ export default function Capture() {
         </div>
       </div>
 
-      <div className="relative w-full flex-1 max-h-[75vh] bg-black flex items-start justify-center">
+      <div className="relative w-full flex-1 max-h-[75vh] bg-black flex items-start justify-center overflow-hidden">
         <div className="relative">
-          <div className="relative bg-blue-500">
+          <div className="relative">
             {imageArr[stepIndex].url != "" ? ( // VIEWING IMAGE ALREADY TAKEN
-              <div>
+              <div className={`transition-transform duration-300 ${
+                isSliding ? '-translate-x-[100vw]' : 'translate-x-0'
+              }`}>
                 <img src={imageArr[stepIndex].url} className="w-full h-auto object-contain bg-black" />
                 {/* Quality Score */}
                 <div className="absolute bottom-0 flex flex-col w-full bg-black/50">
@@ -433,18 +452,40 @@ export default function Capture() {
                 
               </div>
             ) : (
-              <div>
+              <div className="relative">
                 <video ref={videoRef} autoPlay playsInline className="w-full h-auto object-contain bg-black" />
                 <CornerMarkers />
+                {/* Shutter effect overlay */}
+                {isCapturing && (
+                  <div className="absolute inset-0 bg-black z-10" />
+                )}
+                {/* Show captured image overlay for 1 second */}
+                {showCapturedImage && imageArr[stepIndex].url && (
+                  <div className="absolute inset-0 bg-black z-20">
+                    <img src={imageArr[stepIndex].url} className="w-full h-full object-contain" />
+                  </div>
+                )}
               </div>
             )}        
           </div>
 
-            <CaptureButton clickCallback={async () => {
-              const score = await handleCapture();
-              if(score > 80 && stepIndex != imageArr.length-1){
-                goToNextStep();
-              }
+            <CaptureButton 
+              clickCallback={ async () => {
+                // Trigger shutter effect
+                setIsCapturing(true);
+                
+                setTimeout(() => { // turn off shutter effect after 100ms
+                  setIsCapturing(false);
+                }, 100);
+                
+                const score = await handleCapture();
+                
+                // Wait for the 1-second image display, then auto-advance if quality is good
+                if(score > 80 && stepIndex != imageArr.length-1){
+                  setTimeout(() => {
+                    goToNextStep();
+                  }, 1000);
+                }
               }}
               nextCallback={goToNextStep}
               prevCallback={goToPrevStep}
@@ -473,7 +514,7 @@ export default function Capture() {
               min={zoomRange?.min ?? 0}
               max={Math.min(zoomRange?.max ?? 5, 5)}
               step={0.1}
-              value={zoom ?? 1}
+              value={stepIndex > 0 ? 2 : zoom ?? 1}
               //onChange={(e) => handleZoomChange(Number(e.target.value))}
               onInput={(e) => {
                 const z = Number((e.target as HTMLInputElement).value);

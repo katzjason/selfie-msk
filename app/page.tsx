@@ -77,6 +77,7 @@ export default function Home() {
   return (
       <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900">
         <div className="relative flex flex-row">
+           
             <MenuIcon
                 menuOpen={menuOpen}
                 onClick={() => {
@@ -96,7 +97,7 @@ export default function Home() {
         </div>
         
         {/* Expand Summary Button */}
-        <div className="flex mb-5">
+        <div className="flex mb-5 mt-5">
             {!showDemographics && (
                 <button
                     onClick={() => {
@@ -111,7 +112,7 @@ export default function Home() {
         </div>
 
         {/* Form Grid */}
-        <div className="max-w-xl mx-auto grid grid-cols-1 gap-5 pl-10 pr-10">
+        <div className="max-w-xl mx-auto grid grid-cols-1 gap-5 pl-10 pr-10 mt-10">
             {showDemographics && (
             <div className="grid grid-cols-1 gap-5">
 
@@ -323,6 +324,8 @@ export default function Home() {
                             router.push('capture');
                         } else {
                             setShowRequired(true);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+
                         }
                     }}
                   >Take Photos</button>
