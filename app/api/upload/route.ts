@@ -1,113 +1,3 @@
-// import { NextResponse } from "next/server";
-// import fs from "node:fs/promises";
-// import path from "node:path";
-// import { pool } from "@/app/api/db/pool";
-
-// export const runtime = "nodejs";
-
-
-// const diagnosisDict : Record<string, string>= {"Angioma":"Angioma", "Solar lentigo": "Solar Lentigo", "SK": "Seborrheic keratosis","LPLK":"Lichen planus-like keratosis", "Dermatofibroma":"Dermatofibroma", "Nevus":"Melanocytic nevus","BCC":"Basal cell carcinoma",  "SCC":"Squamous cell carcinoma", "Melanoma":"Melanoma", "Other":"Other"}
-
-// export async function POST(req: Request){
-//     const client = await pool.connect();
-//     const uploadId = crypto.randomUUID();
-//     const writtenFiles: string[] = [];
-
-//     try{
-//         // extract data from request
-//         const data = await req.formData();
-//         const patient_id = String(data.get("patient_id") ?? "");
-//         const age_range = String(data.get("age") ?? "");
-//         const sex = String(data.get("sex") ?? "");
-//         const monk_skin_tone = data.get("monk_skin_tone") ? Number(data.get("monk_skin_tone")) : null;
-//         const fitzpatrick_skin_type = data.get("fitzpatrick") ? Number(data.get("fitzpatrick")) : null;
-//         const self_reported_race = data.get("race") ? String(data.get("race")) : null;
-
-//         const anatomic_site = String(data.get("anatomic_site") ?? "");
-//         const clinical_diagnosis = diagnosisDict[String(data.get("clinical_diagnosis") ?? "")];
-//         const biopsied = String(data.get("biopsy") ?? "false") === "true";
-//         const lesion_id = data.get("lesion_id") ? Number(data.get("lesion_id")) : null;
-//         const device_type = String(data.get("device_type") ?? "unknown");
-//         const os = String(data.get("os") ?? "unknown");
-//         const images = data.getAll("images").filter((x): x is File => x instanceof File);
-
-//         //console.log(data);
-
-//         const imageDir = process.env.IMAGE_DIR ?? "/data/images";
-//         //const imageDir = path.join(process.cwd(), "public/images"); // LOCAL FIX
-//         await fs.mkdir(imageDir, { recursive: true });
-
-//         for (const file of images) {
-//             const bytes = Buffer.from(await file.arrayBuffer());
-//             const absPath = path.join(imageDir, file.name);
-//             await fs.writeFile(absPath, bytes);
-//             writtenFiles.push(absPath);
-//         }
-
-//         await client.query("BEGIN");
-//         await client.query(
-//             `
-//             INSERT INTO patients (patient_id, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race)
-//             VALUES ($1, $2, $3, $4, $5, $6)
-//             ON CONFLICT (patient_id) DO UPDATE SET
-//                 age_range = EXCLUDED.age_range,
-//                 sex = EXCLUDED.sex,
-//                 monk_skin_tone = EXCLUDED.monk_skin_tone,
-//                 fitzpatrick_skin_type = EXCLUDED.fitzpatrick_skin_type,
-//                 self_reported_race = EXCLUDED.self_reported_race
-//             `,
-//             [patient_id, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race]
-//         );
-
-//         const lesionRes = await client.query(
-//             `
-//             INSERT INTO lesions (patient_id, anatomic_site, vectra_id, biopsied, clinical_diagnosis)
-//             VALUES ($1, $2, $3, $4, $5)
-//             RETURNING id
-//             `,
-//             [patient_id, anatomic_site, lesion_id, biopsied, clinical_diagnosis]
-//         );
-
-//         const lesionPrimaryKey = lesionRes.rows[0].id as number;
-
-//         for (const file of images) {
-//             const absPath = path.join(imageDir, file.name);
-//             const imageRes = await client.query(
-//             `
-//             INSERT INTO images (file_path, captured_at, lesion_id, device_type, device_os, image_type)
-//             VALUES ($1, $2, $3, $4, $5, $6)
-//             `,
-//             [absPath, file.lastModified, lesionPrimaryKey, device_type, os, "TODO"]
-//         );
-//         }
-
-       
-
-//         await client.query("COMMIT");
-      
-//         return NextResponse.json( {ok: true})
-
-//     } catch (err:any) {
-//         try { await client.query("ROLLBACK"); } catch {}
-//         await Promise.allSettled(writtenFiles.map(p => fs.rm(p, { force: true })));
-//         return NextResponse.json({ ok:false, error: err?.message ?? "Unknown failure"})
-//     } finally {
-//         client.release();
-//     }
-    
-    
-
-//     // write to image store
-
-//     // write to metadata store
-
-//     // revert back if anything fails
-
-//     // Return a response
-
-// }
-
-
 /// NEW VERSION
 import { NextResponse } from "next/server";
 import fs from "node:fs/promises";
@@ -136,14 +26,6 @@ const fitzpatrickDict: Record<string, number> = {
 
 function safeDiagnosis(raw: string) {
   return diagnosisDict[raw] ?? "Other";
-}
-
-// optional: keep extensions sane
-function extFromMime(mime: string) {
-  if (mime === "image/jpeg") return "jpg";
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  return "bin";
 }
 
 export async function POST(req: Request) {
@@ -189,7 +71,6 @@ export async function POST(req: Request) {
 
     const uploadId = crypto.randomUUID();
     
-    console.log(uploadId);
     // Image directory (volume mount in Docker)
     const imageDir = process.env.IMAGE_DIR ?? "/data/images";
     await fs.mkdir(imageDir, { recursive: true });
@@ -199,12 +80,10 @@ export async function POST(req: Request) {
     const stored = await Promise.all(
       images.map(async (file, i) => {
         const bytes = Buffer.from(await file.arrayBuffer());
-        const ext = extFromMime(file.type);
-        const storedName = `${uploadId}_${i}_${crypto.randomUUID()}.${ext}`;
-        const absPath = path.join(imageDir, storedName);
+        const absPath = path.join(imageDir, file.name);
         await fs.writeFile(absPath, bytes);
         writtenFiles.push(absPath);
-        return { absPath, originalName: file.name, capturedAt: metasArr[i]?.captured_time ?? new Date(), imageType: metasArr[i]?.code };
+        return { absPath, originalName: file.name, capturedAt: metasArr[i]["capture_time"], imageType: metasArr[i]?.code };
       })
     );
 

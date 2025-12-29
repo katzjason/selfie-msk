@@ -307,11 +307,17 @@ export default function Capture() {
       // Works for data: URLs and blob: URLs
       const blob = await (await fetch(img.url)).blob();
 
-      const ext = blob.type === "image/png"
-        ? "png"
-        : blob.type === "image/webp"
-          ? "webp"
-          : "jpg";
+      const mimeMap : Record<string, string>= {
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/jpeg": "jpg",
+        "image/heic": "heic",
+        "image/avif": "avif",
+        "image/gif": "gif",
+        "image/svg+xml": "svg"
+      };
+
+      const ext = mimeMap[blob.type] || "jpg";
 
       const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
 
