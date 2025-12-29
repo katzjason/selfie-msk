@@ -58,6 +58,11 @@ export default function Capture() {
       description: "From ~6 inches away, without any camera attachment",
     },
     {
+      id: "non-polarized-cone",
+      title: "Non-Polarized, Cone Attachment w/o Glass",
+      description: "Make sure the lesion fills most of the frame",
+    },
+    {
       id: "polarized-contact",
       title: "Polarized, Contact Photo",
       description: "Make sure the lesion fills most of the frame",
@@ -218,6 +223,27 @@ export default function Capture() {
       if (pendingZoomRef.current == null) return;
       applyZoomNow(pendingZoomRef.current);
     });
+  };
+
+  const handleVideoClick = async (e: React.MouseEvent<HTMLVideoElement>) => {
+    const video = videoRef.current;
+    const track = trackRef.current;
+    if (!video || !track) return;
+
+    const rect = video.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+
+    try {
+      await track.applyConstraints({
+        advanced: [{ 
+          focusMode: "manual",
+          pointsOfInterest: [{ x, y }] 
+        }]
+      } as any);
+    } catch (err) {
+      console.log("Focus not supported or failed:", err);
+    }
   };
 
   useEffect(() => {
@@ -445,7 +471,13 @@ export default function Capture() {
               </div>
             ) : (
               <div className="relative">
-                <video ref={videoRef} autoPlay playsInline className="w-full h-auto object-contain bg-black" />
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-auto object-contain bg-black cursor-pointer" 
+                  onClick={handleVideoClick}
+                />
                 <CornerMarkers />
                 {/* Shutter effect overlay */}
                 {isCapturing && (
