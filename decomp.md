@@ -22,18 +22,14 @@ Last Updated: 12/17/2025
 
 
 # TODO:
+- Focus is not working
+- Slider broken for derm
 
-## Frontend
-- Force one of the skin types
-- Combine with Marghoob - benign/biopsy orders diagnoses
-- Slider sizing issue
+
 - Monk scale UI
 - Anatomic Site Mannequin
-- Layout size optimization
 
 ## Backend
-- File naming convention
-- Integrate database connection
 - Export data button
 - Hash MRN and serve non-protected patient data back
 

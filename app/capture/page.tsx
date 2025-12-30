@@ -50,6 +50,7 @@ export default function Capture() {
   const { showToast } = useToast();
   const {lesionCounter, updatePatient} = usePatient();
   const patient = usePatient();
+  const [supportsFocus, setSupportsFocus] = useState<boolean>(false);
 
   const photoSteps = [
     {
@@ -123,47 +124,18 @@ export default function Capture() {
       if (!track) return;
 
       const capabilities = track.getCapabilities() as any;
-      if (!capabilities){
-        // ?
+      if ('focusMode' in capabilities){
+        setSupportsFocus(true);
       }
 
+      console.log("Supports Focus: ", supportsFocus);
+  
     setZoomRange({min: capabilities.zoom.min, max: capabilities.zoom.max});
     const currentSettings = track.getSettings() as any;
     setZoom(currentSettings.zoom || zoomRange?.min || 1);
     } catch (err) {
       console.log("Error initializing zoom capabilities:", err);
     }
-  }
-    
-
-  const handleZoomChange = async (value: number) => {
-    setZoom(value);
-
-    const track = getVideoTrack();
-    if (!track) return;
-
-    const constraints: MediaTrackConstraints = {
-      advanced: [{ zoom: value }],
-    } as any;
-
-    try {
-      await track.applyConstraints(constraints);
-    } catch (err) {
-      console.log("Error applying zoom constraints:", err);
-    }
-  };
-
-  async function uploadImage(blob: Blob) {
-    const form = new FormData();
-    form.append("file", blob, "capture.png");
-
-    const res = await fetch("/api/images", {
-      method: "POST",
-      body: form,
-    });
-
-    if (!res.ok) throw new Error("Upload failed");
-    return res.json(); // { id, filename, url }
   }
 
   const handleCapture = async () => {
@@ -234,6 +206,7 @@ export default function Capture() {
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
 
+    console.log("X: ", x, " Y: ", y);
     try {
       await track.applyConstraints({
         advanced: [{ 
@@ -422,15 +395,15 @@ export default function Capture() {
       {/* Instruction bar at top */}
       <div className="mb-2 rounded-xl bg-black/70 text-white px-3 py-2 flex items-center justify-between">
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-wide opacity-70">
+          <div className="text-[10px] uppercase tracking-wide opacity-70">
             Step {stepIndex + 1} of {photoSteps.length}
-          </span>
-          <span className="text-sm font-semibold">
+          </div>
+          <div className="text-sm font-semibold">
             {photoSteps[stepIndex].title}
-          </span>
-          <span className="text-xs opacity-80">
+          </div>
+          <div className="text-xs opacity-80">
             {photoSteps[stepIndex].description}
-          </span>
+          </div>
         </div>
       </div>
 
@@ -476,7 +449,7 @@ export default function Capture() {
                   autoPlay 
                   playsInline 
                   className="w-full h-auto object-contain bg-black cursor-pointer" 
-                  onClick={handleVideoClick}
+                  onClick={supportsFocus ? handleVideoClick : () => {console.log("Tap to focus is not supported")}}
                 />
                 <CornerMarkers />
                 {/* Shutter effect overlay */}
@@ -525,10 +498,8 @@ export default function Capture() {
                 setImageArr(arrCopy);
               }}
             />
-          
         </div>
         
-
         {!imageArr[stepIndex].url && (
           <div className="w-10 absolute right-0 top-1/2 -translate-y-1/2 flex flex-col items-center h-90 justify-between">
             <div className="text-white text-2xl font-semibold pointer-events-none">+</div>
@@ -538,7 +509,7 @@ export default function Capture() {
               min={stepIndex > 0 ? 1 : zoomRange?.min ?? 0}
               max={Math.min(zoomRange?.max ?? 5, 5)}
               step={0.1}
-              value={stepIndex > 0 ? 2 : zoom  ?? 1}
+              value={zoom ?? 1}
               //onChange={(e) => handleZoomChange(Number(e.target.value))}
               onInput={(e) => {
                 const z = Number((e.target as HTMLInputElement).value);
