@@ -535,10 +535,10 @@ export default function Capture() {
             {/* Zoom Slider */}
             <input
               type="range"
-              min={zoomRange?.min ?? 0}
+              min={stepIndex > 0 ? 1 : zoomRange?.min ?? 0}
               max={Math.min(zoomRange?.max ?? 5, 5)}
               step={0.1}
-              value={stepIndex > 0 ? 2 : zoom ?? 1}
+              value={stepIndex > 0 ? 2 : zoom  ?? 1}
               //onChange={(e) => handleZoomChange(Number(e.target.value))}
               onInput={(e) => {
                 const z = Number((e.target as HTMLInputElement).value);
