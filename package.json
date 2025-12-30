@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "embla-carousel-react": "^8.6.0",
+    "exceljs": "^4.4.0",
     "lucide-react": "^0.555.0",
     "next": "16.0.10",
     "pg": "^8.16.3",

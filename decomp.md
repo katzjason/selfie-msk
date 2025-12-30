@@ -23,7 +23,6 @@ Last Updated: 12/17/2025
 
 # TODO:
 - Focus is not working
-- Slider broken for derm
 
 
 - Monk scale UI
@@ -45,12 +44,7 @@ DONE:
 ## Outstanding Questions
 - AWS Issues
 - Admin Page
-- Multiple versions of the app?
-- Auth?
-- Canfield automatic toggle limitations (according to Sam)
 - Tying in path reports
-- App name
-- LANGUAGE/DERM DIAGNOSIS NAMES
 
 
 http://172.28.37.105:3000

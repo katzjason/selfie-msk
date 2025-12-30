@@ -222,6 +222,8 @@ export default function Capture() {
   useEffect(() => {
     startCamera();
     document.body.style.overflow = "hidden"; // locks scrolling
+    // Set initial zoom based on stepIndex: 5 for step 0, 2 otherwise
+    setZoom(stepIndex === 0 ? 5 : 2);
 
     return () => {
       document.body.style.overflow = "";
@@ -234,6 +236,11 @@ export default function Capture() {
     initZoomCapabilities();
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
+    }
+    // Apply zoom preset based on stepIndex: 5 for step 0
+    if(stepIndex == 0){
+      setZoom(5);
+      applyZoomNow(5);
     }
   }, [stream, stepIndex, imageArr]);
 
@@ -260,6 +267,11 @@ export default function Capture() {
     if(stepIndex == photoSteps.length-1){
       handleUpload();
       return;
+    }
+
+    if(stepIndex == 0){
+      setZoom(2);
+      applyZoomNow(2);
     }
     
     // Trigger slide-out animation
@@ -471,17 +483,17 @@ export default function Capture() {
                 // Trigger shutter effect
                 setIsCapturing(true);
                 
-                setTimeout(() => { // turn off shutter effect after 100ms
+                setTimeout(() => { // turn off shutter effect after 200ms
                   setIsCapturing(false);
-                }, 100);
+                }, 200);
                 
                 const score = await handleCapture();
                 
-                // Wait for the 1-second image display, then auto-advance if quality is good
+                // Wait for the 2-second image display, then auto-advance if quality is good
                 if(score > 80 && stepIndex != imageArr.length-1){
                   setTimeout(() => {
                     goToNextStep({ slide: true });
-                  }, 1000);
+                  }, 2000);
                 }
               }}
               nextCallback={goToNextStep}

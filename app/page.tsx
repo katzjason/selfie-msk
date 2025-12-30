@@ -42,6 +42,7 @@ export default function Home() {
     const [mraStudy, setMraStudy] = useState(true);
     const [showRequired, setShowRequired] = useState(false);
     const [showReset, setShowReset] = useState(false);
+    const [tempMRN, setTempMRN] = useState('');
 
     useEffect(() => {
         setHasMounted(true);
@@ -238,13 +239,14 @@ export default function Home() {
                 />
             </div>
 
-            {biopsy && newPatient && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
+            {((biopsy && newPatient) || (biopsy && !newPatient && !mrn && !showDemographics)) && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
                 children={
                     <input
                         type="text"
                         inputMode="numeric"
-                        value={mrn ?? ''}
-                        onChange={(e) => updatePatient({ mrn : e.target.value })}
+                        value={mrn ? mrn : (tempMRN ?? '')}
+                        //onChange={(e) => updatePatient({ mrn : e.target.value })}
+                        onChange={(e) => {setTempMRN(e.target.value)}}
                         placeholder="Enter patient study ID/MRN"
                         className="w-full px-3 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-black focus:outline-none focus:border-gray-500 transition-all"
                     />
@@ -321,7 +323,10 @@ export default function Home() {
                             setShowDemographics(false);
                             localStorage.setItem('showDemographics', JSON.stringify(false));
                             setShowRequired(false);
-                            updatePatient({ newPatient: false })
+                            updatePatient({ newPatient: false});
+                            if (tempMRN && !mrn){
+                                updatePatient({ mrn: tempMRN});
+                            }
                             router.push('capture');
                         } else {
                             setShowRequired(true);
