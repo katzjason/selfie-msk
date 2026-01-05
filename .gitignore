@@ -46,3 +46,7 @@ venv/
 env/
 __pycache__/
 *.pyc
+
+# backup folder
+backup/
+metadata.xlsx

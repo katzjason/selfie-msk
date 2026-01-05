@@ -4,7 +4,7 @@ import { usePatient } from '@/app/contexts/patient';
 import DemographicsSummary from '@/app/components/demographics-summary';
 import { useRouter } from 'next/navigation';
 import FormField from '@/app/components/form-field';
-import MenuIcon from '@/app/components/menu-icon'
+import MenuIcon from '@/app/components/menu-icon';
 import ResetButton from '@/app/components/reset-button';
 import ToggleSwitch from '@/app/components/toggle-switch';
 

@@ -93,3 +93,8 @@ curl -X POST http://localhost:3000/api/upload \
   ls -l /home/jkatz/selfie/selfie1/public/images/sk_80b51079-c58f-4bfb-8267-c3c798944f26.png
 
   postgresql://app:app_password@db:5432/selfie
+
+
+
+# DOWNLOAD IMAGE VOLUME COMMAND:
+docker run --rm --volume selfie1_selfie_images:/source --volume ${PWD}/backup:/backup alpine tar czvf /backup/volume_backup.tar.gz -C /source .

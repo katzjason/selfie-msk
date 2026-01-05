@@ -63,7 +63,8 @@ INSERT INTO image_types (code) VALUES
   ('close-up'),
   ('polarized-contact'),
   ('non-polarized-contact'),
-  ('non-polarized-liquid-contact')
+  ('non-polarized-liquid-contact'),
+  ('non-polarized-cone')
   ON CONFLICT DO NOTHING;
 
 CREATE TABLE images (

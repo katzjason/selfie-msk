@@ -352,7 +352,7 @@ export default function Capture() {
       body: formData
     });
     if(res.status == 200){
-      showToast("Uploaded Lesion No. " + lesionCounter.toString(), 3000);
+      showToast("Uploaded Lesion No. " + lesionCounter.toString(), 4000);
       updatePatient(prev => ({
         lesionCounter: prev.lesionCounter + 1
       }));
@@ -361,7 +361,7 @@ export default function Capture() {
       setImageArr(Array(photoSteps.length).fill({url: "", description: "", score: 0}));
       localStorage.setItem("showReset", "true");
     } else {
-      showToast("Uknown Upload Failure", 3000);
+      showToast("Unknown Upload Failure", 4000);
     }
     
     // Navigate back to page to capture next lesion
@@ -380,11 +380,13 @@ export default function Capture() {
 
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.some((x) => typeof x === "string" && x.length > 0)) {
-        // Ensure correct length
-        const next = Array(photoSteps.length).fill("");
+      if (Array.isArray(parsed) && parsed.some((x) => x?.url && x.url.length > 0)) {
+        // Ensure correct length and structure
+        const next = Array(photoSteps.length).fill({url: "", description: "", score: 0, captureTime: ""});
         for (let i = 0; i < Math.min(parsed.length, next.length); i++) {
-          if (typeof parsed[i] === "string") next[i] = parsed[i];
+          if (parsed[i]?.url) {
+            next[i] = parsed[i];
+          }
         }
         setImageArr(next);
       }
