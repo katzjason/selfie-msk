@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import MenuIcon from '@/app/components/menu-icon';
+import EnlargedImage from '@/app/components/enlarged-image';
 import { useRouter } from 'next/navigation';
     
 type Row = {
@@ -73,6 +74,8 @@ export default function Dashboard() {
         return 10;
     });
     const [dbSize, setDbSize] = useState<number>(0);
+    const [enlargedImage, setEnlargedImage] = useState<string>("");
+    const [enlargedImageType, setEnlargedImageType] = useState<string>("");
 
     // Save to localStorage when fields change
     useEffect(() => {
@@ -244,9 +247,13 @@ export default function Dashboard() {
                                         ) : (
                                             <img
                                                 key={idx}
-                                                className="w-full object-cover rounded-lg max-h-[350px] md:max-h-[420px]"
+                                                className="w-full object-cover rounded-lg max-h-[350px] md:max-h-[420px] hover:cursor-pointer"
                                                 src={`https://172.28.37.105/api/images/${encodeURIComponent(value.file.substring(13))}`}
                                                 alt={value.image_type}
+                                                onClick={() => {
+                                                    setEnlargedImage(`https://172.28.37.105/api/images/${encodeURIComponent(value.file.substring(13))}`);
+                                                    setEnlargedImageType(value.image_type);
+                                                }}
                                             />
                                         )}
                                     </div>
@@ -256,6 +263,27 @@ export default function Dashboard() {
                     ))}
                 </div>}
             </div>
+
+            {enlargedImage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-200/90">
+                    <div className="relative">
+                        <button
+                            className="absolute top-8 right-2 z-10"
+                            onClick={() => {setEnlargedImage("")}}
+                            aria-label="Close"
+                            >
+                            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow hover:cursor-pointer">
+                                <span className="text-3xl font-bold bg-gradient-to-br from-yellow-200 to-pink-500 bg-clip-text text-transparent ">
+                                    &times;
+                                </span>
+                            </div>
+                        </button>
+                    
+                    <EnlargedImage filepath={enlargedImage} image_type={enlargedImageType}/>
+                    </div>
+                </div>
+            )}
+
             {/* Sidebar overlay */}
           {menuOpen && (
             <>

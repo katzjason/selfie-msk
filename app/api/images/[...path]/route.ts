@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import path from "node:path";
 import fs from "node:fs/promises";
 
@@ -14,10 +15,13 @@ function contentTypeFor(ext: string) {
   }
 }
 
-export async function GET(_: Request, { params }: { params: { path: string[] } }) {
+type Ctx = { params: Promise<{ path: string[] }> };
+
+export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
+    const { path: parts } = await ctx.params;
     const imageDir = process.env.IMAGE_DIR ?? "/data/images";
-    const rel = params.path.join("/");
+    const rel = parts.join("/");
 
     // Prevent path traversal
     const abs = path.resolve(imageDir, rel);
