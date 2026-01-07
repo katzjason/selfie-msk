@@ -92,7 +92,11 @@ export default function Capture() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }, // pulls up rear camera
+        video: { 
+          facingMode: "environment",
+          width: {ideal: 4032, max: 4032},
+          height: {ideal: 3024, max: 3024}  
+        }, // pulls up rear camera
         audio: false, 
       });
 
@@ -139,8 +143,8 @@ export default function Capture() {
   }
 
   const handleCapture = async () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
+    const video = videoRef.current!;
+    const canvas = canvasRef.current!;
     if (!video || !canvas) return 0;
 
     canvas.width = video.videoWidth;
@@ -150,37 +154,53 @@ export default function Capture() {
     if (!ctx) return 0;
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageDataUrl = canvas.toDataURL("image/png");
 
-    // Assess image quality
-    const qualityRes = await assessQuality(imageDataUrl)
-    const description = qualityRes.description;
-    const score = parseInt(qualityRes.score);
-    const captureTime = new Date().toISOString();
-
-    setImageArr((prev) => {
-      const copy = [...prev];
-      copy[stepIndex] = {url: imageDataUrl, description: description, score: score, captureTime};
-      return copy;
+    // Use toBlob to get a JPEG
+    return new Promise<number>((resolve) => {
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          resolve(0);
+          return;
+        }
+        const imageDataUrl = URL.createObjectURL(blob);
+        // Assess image quality (convert blob to dataUrl for model if needed)
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const dataUrl = reader.result as string;
+          const qualityRes = await assessQuality(dataUrl);
+          const description = qualityRes.description;
+          const score = parseInt(qualityRes.score);
+          const captureTime = new Date().toISOString();
+          setImageArr((prev) => {
+            const copy = [...prev];
+            copy[stepIndex] = {url: imageDataUrl, description: description, score: score, captureTime};
+            return copy;
+          });
+          // Show the captured image for 1 second
+          setShowCapturedImage(true);
+          setTimeout(() => {
+            setShowCapturedImage(false);
+          }, 1000);
+          resolve(score);
+        };
+        reader.readAsDataURL(blob);
+      }, "image/jpeg", 0.95);
     });
-
-    // Show the captured image for 1 second
-    setShowCapturedImage(true);
-    setTimeout(() => {
-      setShowCapturedImage(false);
-    }, 1000);
-
-    return score;
   };
 
   const rafRef = useRef<number | null>(null);
   const pendingZoomRef = useRef<number | null>(null);
+  const lastAppliedTimeRef = useRef<number>(0);
 
   const applyZoomNow = (z: number) => {
     const track = trackRef.current;
     if (!track) return;
     
-    // Apply immediately; no need to wait for setState
+    const now = performance.now();
+    // Throttle to max one constraint update every 100ms at high resolution
+    if (now - lastAppliedTimeRef.current < 100) return;
+    
+    lastAppliedTimeRef.current = now;
     track.applyConstraints({ advanced: [{ zoom: z }] } as any).catch(() => {
       // Some devices/browsers won't support zoom; ignore gracefully
     });
@@ -421,8 +441,8 @@ export default function Capture() {
         </div>
       </div>
 
-      <div className="relative w-full flex-1 bg-black flex items-start justify-center overflow-visible pb-24">
-        <div className="relative max-h-[calc(100dvh-200px)]" style={{ maxHeight: 'calc(100dvh - 200px)' }}>
+      <div className="relative w-full flex-1 bg-black flex items-center justify-center overflow-visible pb-24">
+        <div className="relative flex flex-col items-center" style={{ maxHeight: 'calc(100dvh - 200px)' }}>
           <div className="relative">
             {imageArr[stepIndex].url != "" ? ( // VIEWING IMAGE ALREADY TAKEN
               <div className={`transition-transform duration-300 ${
@@ -450,19 +470,18 @@ export default function Capture() {
                         />
                       </div>
                     </div>
-                    
                   </div>
                   <div className="text-xs flex justify-center w-full pb-1">{imageArr[stepIndex].description}</div>
                 </div>
                 
               </div>
             ) : (
-              <div className="relative">
+              <div className="relative inline-block">
                 <video 
                   ref={videoRef} 
                   autoPlay 
                   playsInline 
-                  className="w-full h-auto object-contain bg-black cursor-pointer" 
+                  className="max-w-full max-h-[calc(100dvh-150px)] w-auto h-auto object-contain bg-black cursor-pointer block" 
                   onClick={supportsFocus ? handleVideoClick : () => {console.log("Tap to focus is not supported")}}
                 />
                 <CornerMarkers />
@@ -480,8 +499,9 @@ export default function Capture() {
             )}        
           </div>
 
-            <CaptureButton 
-              clickCallback={ async () => {
+            <div className="">
+              <CaptureButton 
+                clickCallback={ async () => {
                 // Trigger shutter effect
                 setIsCapturing(true);
                 
@@ -508,10 +528,11 @@ export default function Capture() {
               retakeCallback={() => {
                 // Remove the image for this step
                 const arrCopy = [...imageArr];
-                arrCopy[stepIndex] = {url: "", description: "", score: 0} as any;
+                arrCopy[stepIndex] = {url: "", desciption: "", score: 0} as any;
                 setImageArr(arrCopy);
               }}
             />
+            </div>
         </div>
         
         {!imageArr[stepIndex].url && (
@@ -524,7 +545,6 @@ export default function Capture() {
               max={Math.min(zoomRange?.max ?? 5, 5)}
               step={0.1}
               value={zoom ?? 1}
-              //onChange={(e) => handleZoomChange(Number(e.target.value))}
               onInput={(e) => {
                 const z = Number((e.target as HTMLInputElement).value);
                 setZoom(z);        // UI thumb updates

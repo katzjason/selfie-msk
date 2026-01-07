@@ -1,5 +1,9 @@
-# Automated export of images and metadata volumes
 #!/usr/bin/env bash
+
+
+# RUN: PGPASSWORD=app_password bash export.sh
+
+# Automated export of images and metadata volumes
 set -euo pipefail
 
 # -----------------------
@@ -8,9 +12,10 @@ set -euo pipefail
 NETWORK="selfie1_default"        # docker network where Postgres is reachable (e.g. <composeproject>_default)
 PG_HOST="db"                    # compose service name for Postgres
 PG_USER="app"
-PG_DB="selfie1-db-1"
+# PG_DB="selfie1-db-1"
+PG_DB="selfie"
 
-IMAGES_VOL="selfie1_images"     # docker volume name containing images
+IMAGES_VOL="selfie1_selfie_images"     # docker volume name containing images
 
 # Local output
 OUT_DIR="./export"
@@ -18,7 +23,7 @@ STAMP="$(date +%Y%m%d_%H%M%S)"
 FINAL_TAR="selfie_export_${STAMP}.tar.gz"
 
 # Optional: pass PGPASSWORD via env when running:
-#   PGPASSWORD=app_password ./export.sh
+  #PGPASSWORD=app_password ./export.sh
 : "${PGPASSWORD:=}"
 
 # -----------------------

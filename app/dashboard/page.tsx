@@ -105,6 +105,17 @@ export default function Dashboard() {
         getSize();
     }, []);
 
+    useEffect(() => {
+        if (enlargedImage) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+        }, [enlargedImage]);
+
 
     // Query DB whenever any filter changes
     useEffect(() => {
@@ -269,7 +280,9 @@ export default function Dashboard() {
                     <div className="relative">
                         <button
                             className="absolute top-8 right-2 z-10"
-                            onClick={() => {setEnlargedImage("")}}
+                            onClick={() => {
+                                setEnlargedImage("");
+                                setEnlargedImageType("")}}
                             aria-label="Close"
                             >
                             <div className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow hover:cursor-pointer">

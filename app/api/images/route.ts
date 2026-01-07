@@ -5,7 +5,6 @@ import { randomUUID } from 'crypto';
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-    console.log("ENTERED POST REQUEST");
     const dir = process.env.IMAGE_DIR ?? "/data/images";
     await mkdir(dir, { recursive: true });
 
