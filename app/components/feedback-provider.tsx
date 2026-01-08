@@ -1,10 +1,10 @@
 "use client"
-import ReportBug from '@/app/components/report-bug';
 import React, { createContext, useContext, useCallback, useRef, useState, useEffect } from "react";
 import { useToast } from '@/app/components/toast-provider';
 
 type feedbackCtx = { 
     showfeedback: (message: string) => void;
+    openFeedback: () => void;
 };
 
 const feedbackContext = createContext<feedbackCtx | null>(null);
@@ -42,15 +42,31 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
     if (storedShowFeedback === 'true') setShowFeedback(true);
   }, []);
 
+  // Prevent scrolling when feedback modal is open
+  useEffect(() => {
+    if (showFeedback) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showFeedback]);
+
   return (
-    <feedbackContext.Provider value={{ showfeedback: (message: string) => {
-      setShowFeedback(true);
-    } }}>
+    <feedbackContext.Provider value={{ 
+      showfeedback: (message: string) => {
+        setShowFeedback(true);
+      },
+      openFeedback: () => {
+        setShowFeedback(true);
+        localStorage.setItem("showFeedback", "true");
+      }
+    }}>
       {children}
-      <ReportBug clickCallback={() => {
-        setShowFeedback(!showFeedback);
-        localStorage.setItem("showFeedback", (!showFeedback).toString());
-        }}/>
 
       { showFeedback && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-200/90 flex flex-col">

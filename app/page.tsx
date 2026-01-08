@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef} from 'react';
-import { FeedbackProvider } from '@/app/components/feedback-provider';
+import { FeedbackProvider, usefeedback } from '@/app/components/feedback-provider';
 import { usePatient } from '@/app/contexts/patient';
 import DemographicsSummary from '@/app/components/demographics-summary';
 import { useRouter } from 'next/navigation';
@@ -17,8 +17,9 @@ const raceOptions : string[] = ["White", "Hispanic/Latino/Spanish Origin of any 
 const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
 const FIRST_VISIT_KEY = "hasSeenMenu";
 
-export default function Home() {
+function HomeContent() {
     const router = useRouter();
+    const { openFeedback } = usefeedback();
     const {
         updatePatient,
         age,
@@ -77,7 +78,6 @@ export default function Home() {
 
 
     return (
-        <FeedbackProvider>
             <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900">
                 <div className="relative flex flex-row">
            
@@ -370,12 +370,29 @@ export default function Home() {
                         >Dashboard
                         </button>
                      </div>
+                     <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                        <button 
+                            className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
+                            onClick={() => {
+                                setMenuOpen(false);
+                                openFeedback();
+                            }}
+                        >Feedback
+                        </button>
+                     </div>
                 </nav>
               </aside>
             </>
           )}
       </div>
             </div>
+    );
+}
+
+export default function Home() {
+    return (
+        <FeedbackProvider>
+            <HomeContent />
         </FeedbackProvider>
     );
 }
