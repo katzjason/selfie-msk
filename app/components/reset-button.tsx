@@ -8,6 +8,7 @@ export default function ResetButton(){
                 onClick={() => {
                     localStorage.removeItem("patient-context");
                     localStorage.removeItem("showReset");
+                    localStorage.removeItem("capturedImages");
                     window.location.reload();
                 }}
                 >Reset

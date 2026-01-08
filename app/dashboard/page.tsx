@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import MenuIcon from '@/app/components/menu-icon';
+import { FeedbackProvider } from '@/app/components/feedback-provider';
 import EnlargedImage from '@/app/components/enlarged-image';
 import { useRouter } from 'next/navigation';
     
@@ -164,7 +165,8 @@ export default function Dashboard() {
     }, [anatomicSite, diagnosis, size]);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900 w-full pb-10">
+        <FeedbackProvider>
+          <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900 w-full pb-10">
             <div className="relative flex flex-row">
                 <MenuIcon
                     menuOpen={menuOpen}
@@ -242,7 +244,7 @@ export default function Dashboard() {
                                 <div><span className="font-semibold uppercase ">Diagnosis: </span> {row.clinical_diagnosis?? "N/A"}</div>
                                 <div><span className="font-semibold uppercase ">Anatomic Site: </span> {row.anatomic_site?? "N/A"}</div>
                                 <div><span className="font-semibold uppercase ">Timestamp: </span>{makeDatePretty(row.captured_at) ?? "N/A"}</div>
-                                {/* <div><span className="font-semibold uppercase ">Lesion ID: </span>{row.lesion_id ?? "N/A"}</div> */}
+                                <div><span className="font-semibold uppercase ">Lesion ID: </span>{row.lesion_id ?? "N/A"}</div>
                             </div>
                             <div
                                 className="flex flex-row flex-wrap md:flex-nowrap gap-2 md:gap-4 w-full items-stretch md:justify-between justify-center"
@@ -254,7 +256,7 @@ export default function Dashboard() {
                                     >
                                         <div className="block text-xs lg:text-base text-gray-600 lowercase tracking-wide mb-1 font-bold text-center break-words w-full max-w-full">{value.image_type}</div>
                                         {value.file == "N/A" ? (
-                                            <div className="flex flex-col items-center justify-center bg-gray-200 w-full h-full font-bold text-gray-600">NOT TAKEN</div>
+                                            <div className="flex flex-col items-center justify-center bg-gray-200 w-full h-full font-bold rounded-lg text-gray-600">NOT TAKEN</div>
                                         ) : (
                                             <img
                                                 key={idx}
@@ -331,6 +333,7 @@ export default function Dashboard() {
               </aside>
             </>
           )}
-        </div>
+          </div>
+        </FeedbackProvider>
     );
 }

@@ -19,11 +19,8 @@ export const metadata: Metadata = {
   description: "Quick dermoscopy capture and upload",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({children,}: Readonly<{children: React.ReactNode;}>) {
+
   return (
     <html lang="en">
       <meta 
@@ -37,6 +34,7 @@ export default function RootLayout({
         <ToastProvider>
           <main>
             {children}
+            {/* <ReportBug clickCallback={() => {}}/> */}
           </main>
         </ToastProvider>
       </PatientProvider>

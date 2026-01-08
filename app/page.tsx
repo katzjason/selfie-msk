@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef} from 'react';
+import { FeedbackProvider } from '@/app/components/feedback-provider';
 import { usePatient } from '@/app/contexts/patient';
 import DemographicsSummary from '@/app/components/demographics-summary';
 import { useRouter } from 'next/navigation';
@@ -75,9 +76,10 @@ export default function Home() {
 
 
 
-  return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900">
-        <div className="relative flex flex-row">
+    return (
+        <FeedbackProvider>
+            <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-900">
+                <div className="relative flex flex-row">
            
             <MenuIcon
                 menuOpen={menuOpen}
@@ -373,6 +375,7 @@ export default function Home() {
             </>
           )}
       </div>
-  </div>
-);
+            </div>
+        </FeedbackProvider>
+    );
 }
