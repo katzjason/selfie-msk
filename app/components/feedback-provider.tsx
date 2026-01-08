@@ -1,6 +1,7 @@
 "use client"
 import ReportBug from '@/app/components/report-bug';
 import React, { createContext, useContext, useCallback, useRef, useState, useEffect } from "react";
+import { useToast } from '@/app/components/toast-provider';
 
 type feedbackCtx = { 
     showfeedback: (message: string) => void;
@@ -9,8 +10,29 @@ type feedbackCtx = {
 const feedbackContext = createContext<feedbackCtx | null>(null);
 
 export function FeedbackProvider({ children }: { children: React.ReactNode }) {
+  const { showToast } = useToast();
   const [message, setMessage] = useState<string>("");
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
+
+  const handleUpload = async (message : string) => {
+    let formData = new FormData();
+    formData.append("message", message);
+
+    const res = await fetch("/api/db/bug", {
+      method: "POST",
+      body: formData
+    });
+
+    if(res.status == 200){
+      showToast("Feedback Submitted", 4000);
+      
+      // Clear captured images from local storage
+      localStorage.setItem("feedbackMessage", "");
+      
+    } else {
+      showToast("Unknown Failure Uploading Feedback", 4000);
+    }
+  }
 
   useEffect(() => {
     const storedMessage = localStorage.getItem("feedbackMessage");
@@ -22,7 +44,6 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <feedbackContext.Provider value={{ showfeedback: (message: string) => {
-      //setMessage({ message });
       setShowFeedback(true);
     } }}>
       {children}
@@ -77,14 +98,10 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 className="block text-sm font-semibold text-white uppercase tracking-wide"
-                onClick={() => {
+                onClick={async () => {
                   setShowFeedback(false);
                   localStorage.setItem("showFeedback", "false");
-
-
-                  // submit to database
-                  // toast pop up
-                  // if success, clear local storage message
+                  await handleUpload(message);
                 }}
               >Submit</button>
             </div>

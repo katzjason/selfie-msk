@@ -77,3 +77,9 @@ CREATE TABLE images (
   image_type TEXT NOT NULL REFERENCES image_types(code)
 );
 
+CREATE TABLE bug_reports (
+  id SERIAL PRIMARY KEY,
+  message TEXT NOT NULL,
+  reported_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
