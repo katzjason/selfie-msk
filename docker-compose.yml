@@ -7,11 +7,18 @@ services:
         - IMAGE_DIR=/data/images
         - NODE_ENV=production
         - DATABASE_URL=postgresql://app:app_password@db:5432/selfie
+        - MRN_KEY_PATH=/run/secrets/mrn_hmac_key
         volumes:
         - selfie_images:/data/images
+        - /opt/selfie/secrets/mrn_hmac_key:/run/secrets/mrn_hmac_key:ro
         depends_on:
         - db
-
+        # secrets:
+        #     - source: mrn_hmac_key
+        #       target: /run/secrets/mrn_hmac_key
+        #       uid: "1001"
+        #       gid: "1001"
+        #       mode: 0440
     caddy:
         image: caddy:2
         ports:
@@ -36,6 +43,10 @@ services:
         - ./db/init/init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
         ports:
         - "5433:5432"
+
+# secrets:
+#     mrn_hmac_key:
+#         file: /opt/selfie/secrets/mrn_hmac_key
 
 volumes:
   selfie_images:

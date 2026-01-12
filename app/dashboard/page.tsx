@@ -244,7 +244,7 @@ function DashboardContent() {
                                 <div><span className="font-semibold uppercase ">Diagnosis: </span> {row.clinical_diagnosis?? "N/A"}</div>
                                 <div><span className="font-semibold uppercase ">Anatomic Site: </span> {row.anatomic_site?? "N/A"}</div>
                                 <div><span className="font-semibold uppercase ">Timestamp: </span>{makeDatePretty(row.captured_at) ?? "N/A"}</div>
-                                <div><span className="font-semibold uppercase ">Lesion ID: </span>{row.lesion_id ?? "N/A"}</div>
+                                {/* <div><span className="font-semibold uppercase ">Lesion ID: </span>{row.lesion_id ?? "N/A"}</div> */}
                             </div>
                             <div
                                 className="flex flex-row flex-wrap md:flex-nowrap gap-2 md:gap-4 w-full items-stretch md:justify-between justify-center"

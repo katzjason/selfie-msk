@@ -9,7 +9,6 @@ import { useToast } from '@/app/components/toast-provider';
 import { usePatient } from '@/app/contexts/patient';
 
 
-
 // Request for Image Quality using Kivanc's model
 async function assessQuality( dataUrl : string) {
   
@@ -142,6 +141,15 @@ export default function Capture() {
     }
   }
 
+  function blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  }
+
   const handleCapture = async () => {
     const video = videoRef.current!;
     const canvas = canvasRef.current!;
@@ -162,18 +170,22 @@ export default function Capture() {
           resolve(0);
           return;
         }
-        const imageDataUrl = URL.createObjectURL(blob);
+        //const imageDataUrl = URL.createObjectURL(blob);
+
         // Assess image quality (convert blob to dataUrl for model if needed)
         const reader = new FileReader();
+        const storedDataUrl = await blobToDataUrl(blob);
+
         reader.onloadend = async () => {
           const dataUrl = reader.result as string;
           const qualityRes = await assessQuality(dataUrl);
           const description = qualityRes.description;
           const score = parseInt(qualityRes.score);
           const captureTime = new Date().toISOString();
+          
           setImageArr((prev) => {
             const copy = [...prev];
-            copy[stepIndex] = {url: imageDataUrl, description: description, score: score, captureTime};
+            copy[stepIndex] = {url: storedDataUrl, description: description, score: score, captureTime};
             return copy;
           });
           // Show the captured image for 1 second
@@ -342,6 +354,7 @@ export default function Capture() {
         "image/png": "png",
         "image/webp": "webp",
         "image/jpeg": "jpg",
+        "image/jpg": "jpg",
         "image/heic": "heic",
         "image/avif": "avif",
         "image/gif": "gif",
@@ -387,7 +400,6 @@ export default function Capture() {
     // Navigate back to page to capture next lesion
     router.back();
   }
-
 
   const goToPrevStep = () => {
     setStepIndex((prev) => Math.max(prev - 1, 0));

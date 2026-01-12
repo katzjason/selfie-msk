@@ -36,6 +36,15 @@ export async function POST(req: Request) {
     console.log(data)
     // Required fields
     const patient_id = String(data.get("patient_id") ?? "").trim();
+    const mrn_key_path = process.env.MRN_KEY_PATH ?? "/run/secrets/mrn_hmac_key";
+    let hash = null;
+    if (patient_id) {
+      const hmacKey = await fs.readFile(mrn_key_path);
+      const hmac = crypto.createHmac("sha256", hmacKey);
+      hmac.update(patient_id);
+      hash = hmac.digest("hex");
+    }
+
     const age_range = String(data.get("age") ?? "").trim();
     const sex = String(data.get("sex") ?? "").trim();
     const anatomic_site = String(data.get("anatomic_site") ?? "").trim();
@@ -108,7 +117,7 @@ export async function POST(req: Request) {
         fitzpatrick_skin_type = EXCLUDED.fitzpatrick_skin_type,
         self_reported_race = EXCLUDED.self_reported_race
       `,
-      [patient_id, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race]
+      [hash ?? "", age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race]
     );
 
     console.log("INSERTED PATIENT");
@@ -119,7 +128,7 @@ export async function POST(req: Request) {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
       `,
-      [patient_id, anatomic_site, lesion_id, biopsied, clinical_diagnosis]
+      [hash ?? "", anatomic_site, lesion_id, biopsied, clinical_diagnosis]
     );
 
     console.log("INSERTED LESION");
