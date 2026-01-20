@@ -80,8 +80,8 @@ export default function Capture() {
   ];
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [imageArr, setImageArr] = useState<{url: string, description: string, score: number, captureTime: string}[]>(
-    Array(photoSteps.length).fill({url: "", description: "", score: 0, captureTime: ""})
+  const [imageArr, setImageArr] = useState<{url: string, blob: Blob | null, description: string, score: number, captureTime: string}[]>(
+    Array(photoSteps.length).fill({url: "", blob: null, description: "", score: 0, captureTime: ""})
   );
   const [isCapturing, setIsCapturing] = useState(false);
   const [showCapturedImage, setShowCapturedImage] = useState(false);
@@ -170,11 +170,12 @@ export default function Capture() {
           resolve(0);
           return;
         }
-        //const imageDataUrl = URL.createObjectURL(blob);
+
+        // Create object URL for display (more memory efficient than data URL)
+        const objectUrl = URL.createObjectURL(blob);
 
         // Assess image quality (convert blob to dataUrl for model if needed)
         const reader = new FileReader();
-        const storedDataUrl = await blobToDataUrl(blob);
 
         reader.onloadend = async () => {
           const dataUrl = reader.result as string;
@@ -185,7 +186,8 @@ export default function Capture() {
           
           setImageArr((prev) => {
             const copy = [...prev];
-            copy[stepIndex] = {url: storedDataUrl, description: description, score: score, captureTime};
+            // Store both the blob and object URL
+            copy[stepIndex] = {url: objectUrl, blob: blob, description: description, score: score, captureTime};
             return copy;
           });
           // Show the captured image for 1 second
@@ -345,10 +347,7 @@ export default function Capture() {
 
     for (let idx = 0; idx < imageArr.length; idx++) {
       const img = imageArr[idx];
-      if (!img?.url) continue;
-
-      // Works for data: URLs and blob: URLs
-      const blob = await (await fetch(img.url)).blob();
+      if (!img?.blob) continue;
 
       const mimeMap : Record<string, string>= {
         "image/png": "png",
@@ -361,12 +360,12 @@ export default function Capture() {
         "image/svg+xml": "svg"
       };
 
-      const ext = mimeMap[blob.type] || "jpg";
+      const ext = mimeMap[img.blob.type] || "jpg";
 
       const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
 
-      // Append binary part
-      formData.append("images", blob, filename);
+      // Append binary part directly from stored blob
+      formData.append("images", img.blob, filename);
 
       // Track metadata aligned with the appended file
       metas.push({
@@ -389,9 +388,17 @@ export default function Capture() {
       updatePatient(prev => ({
         lesionCounter: prev.lesionCounter + 1
       }));
+      showToast("Uploaded Lesion No. " + lesionCounter.toString(), 4000);
+      updatePatient(prev => ({
+        lesionCounter: prev.lesionCounter + 1
+      }));
       // Clear captured images from local storage
       localStorage.removeItem("capturedImages");
-      setImageArr(Array(photoSteps.length).fill({url: "", description: "", score: 0}));
+      // Revoke object URLs to free memory
+      imageArr.forEach(img => {
+        if (img.url) URL.revokeObjectURL(img.url);
+      });
+      setImageArr(Array(photoSteps.length).fill({url: "", blob: null, description: "", score: 0, captureTime: ""}));
       localStorage.setItem("showReset", "true");
     } else {
       showToast("Unknown Upload Failure", 4000);
@@ -538,9 +545,12 @@ export default function Capture() {
               nextText={stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex].url != "" ? "Next" : "Skip"}
               retake={imageArr[stepIndex].url != ""}
               retakeCallback={() => {
-                // Remove the image for this step
+                // Remove the image for this step and revoke object URL
                 const arrCopy = [...imageArr];
-                arrCopy[stepIndex] = {url: "", desciption: "", score: 0} as any;
+                if (arrCopy[stepIndex].url) {
+                  URL.revokeObjectURL(arrCopy[stepIndex].url);
+                }
+                arrCopy[stepIndex] = {url: "", blob: null, description: "", score: 0, captureTime: ""};
                 setImageArr(arrCopy);
               }}
             />

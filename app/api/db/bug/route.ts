@@ -9,7 +9,6 @@ export async function POST(req: Request) {
 
   try {
     const data = await req.formData();
-    console.log(data)
     // Required fields
     const message = String(data.get("message") ?? "").trim();
 

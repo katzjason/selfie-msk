@@ -33,7 +33,6 @@ export async function POST(req: Request) {
 
   try {
     const data = await req.formData();
-    console.log(data)
     // Required fields
     const patient_id = String(data.get("patient_id") ?? "").trim();
     const mrn_key_path = process.env.MRN_KEY_PATH ?? "/run/secrets/mrn_hmac_key";
