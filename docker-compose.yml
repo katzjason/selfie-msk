@@ -6,7 +6,7 @@ services:
         environment:
         - IMAGE_DIR=/data/images
         - NODE_ENV=production
-        - DATABASE_URL=postgresql://app:app_password@db:5432/selfie
+        - DATABASE_URL="postgresql://app:${DB_PASSWORD}@db:5432/selfie"
         - MRN_KEY_PATH=/run/secrets/mrn_hmac_key
         volumes:
         - selfie_images:/data/images
@@ -29,6 +29,8 @@ services:
         - ./certs:/certs:ro
         - caddy_data:/data
         - caddy_config:/config
+        environment:
+        - LAN_IP=${LAN_IP}
         depends_on:
         - web
 
@@ -37,7 +39,7 @@ services:
         environment:
         - POSTGRES_DB=selfie
         - POSTGRES_USER=app
-        - POSTGRES_PASSWORD=app_password
+        - POSTGRES_PASSWORD=${DB_PASSWORD}
         volumes:
         - postgres_data:/var/lib/postgresql/data
         - ./db/init/init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
