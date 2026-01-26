@@ -288,10 +288,53 @@ export default function Capture() {
   function getOS() {
     const ua = navigator.userAgent;
 
-    if (/iphone|ipad|ipod/i.test(ua)) return "iOS";
-    if (/android/i.test(ua)) return "Android";
-    if (/win/i.test(ua)) return "Windows";
-    if (/mac/i.test(ua)) return "macOS";
+    // iOS version detection
+    if (/iphone|ipad|ipod/i.test(ua)) {
+      const match = ua.match(/OS (\d+)_(\d+)_?(\d+)?/);
+      if (match) {
+        const version = `${match[1]}.${match[2]}${match[3] ? '.' + match[3] : ''}`;
+        return `iOS ${version}`;
+      }
+      return "iOS";
+    }
+
+    // Android version detection
+    if (/android/i.test(ua)) {
+      const match = ua.match(/Android (\d+(?:\.\d+)?(?:\.\d+)?)/);
+      if (match) {
+        return `Android ${match[1]}`;
+      }
+      return "Android";
+    }
+
+    // Windows version detection
+    if (/win/i.test(ua)) {
+      const match = ua.match(/Windows NT (\d+\.\d+)/);
+      if (match) {
+        const ntVersion = match[1];
+        const versionMap: Record<string, string> = {
+          '10.0': '10/11',
+          '6.3': '8.1',
+          '6.2': '8',
+          '6.1': '7',
+          '6.0': 'Vista',
+          '5.1': 'XP',
+        };
+        return `Windows ${versionMap[ntVersion] || ntVersion}`;
+      }
+      return "Windows";
+    }
+
+    // macOS version detection
+    if (/mac/i.test(ua)) {
+      const match = ua.match(/Mac OS X (\d+)[_.](\d+)(?:[_.](\d+))?/);
+      if (match) {
+        const version = `${match[1]}.${match[2]}${match[3] ? '.' + match[3] : ''}`;
+        return `macOS ${version}`;
+      }
+      return "macOS";
+    }
+
     if (/linux/i.test(ua)) return "Linux";
     return "Unknown";
   }
