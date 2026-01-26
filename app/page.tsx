@@ -382,6 +382,15 @@ function HomeContent() {
                         >Feedback
                         </button>
                      </div>
+                     <div className="bg-white rounded-xl pl-10 pr-10 pt-2 pb-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-black">
+                        <button 
+                            className="text-xl font-semibold text-gray-600 uppercase tracking-wide"
+                            onClick={() => {
+                                router.push('download');
+                            }}
+                        >Download
+                        </button>
+                     </div>
                 </nav>
               </aside>
             </>
