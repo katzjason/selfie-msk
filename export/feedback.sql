@@ -1,0 +1,3 @@
+COPY (
+  SELECT * FROM bug_reports b
+) TO STDOUT WITH CSV HEADER;

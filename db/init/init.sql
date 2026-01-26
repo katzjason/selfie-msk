@@ -74,7 +74,9 @@ CREATE TABLE images (
   lesion_id INTEGER REFERENCES lesions(id),
   device_type TEXT NOT NULL,
   device_os TEXT NOT NULL,
-  image_type TEXT NOT NULL REFERENCES image_types(code)
+  image_type TEXT NOT NULL REFERENCES image_types(code),
+  poor_quality BOOLEAN NOT NULL DEFAULT false,
+  contains_phi BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE TABLE bug_reports (

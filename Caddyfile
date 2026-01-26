@@ -14,6 +14,6 @@
 }
 
 https://{$LAN_IP} {
-    tls /certs/server.crt /certs/server.key
+    tls /certs/selfie.crt /certs/selfie.key
     reverse_proxy web:3000
 }

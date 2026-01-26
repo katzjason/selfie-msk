@@ -55,6 +55,7 @@ docker network inspect "$NETWORK" >/dev/null
 # Write SQL (edit query here)
 # -----------------------
 SQL_FILE="${OUT_DIR}/export.sql"
+FEEDBACK_SQL_FILE="${OUT_DIR}/feedback.sql"
 
 cat > "$SQL_FILE" <<'SQL'
 COPY (
@@ -70,11 +71,21 @@ COPY (
 ) TO STDOUT WITH CSV HEADER;
 SQL
 
+# feedback
+cat > "$FEEDBACK_SQL_FILE" <<'SQL'
+COPY (
+  SELECT * FROM bug_reports b
+) TO STDOUT WITH CSV HEADER;
+SQL
+
 # -----------------------
 # Export DB -> CSV
 # -----------------------
 CSV_FILE="${OUT_DIR}/db_export.csv"
 XLSX_FILE="${OUT_DIR}/db_export.xlsx"
+
+FEEDBACK_CSV="${OUT_DIR}/feedback_export.csv"
+FEEDBACK_XLSX="${OUT_DIR}/feedback_export.xlsx"
 
 log "Exporting Postgres JOIN output to CSV: ${CSV_FILE}"
 
@@ -88,6 +99,19 @@ docker run --rm \
   > "$CSV_FILE"
 
 log "CSV rows exported: $(($(wc -l < "$CSV_FILE") - 1)) (excluding header)"
+
+log "Exporting feedback to CSV: ${FEEDBACK_CSV}"
+
+# Note: we pass PGPASSWORD into the container if set
+docker run --rm \
+  --network "$NETWORK" \
+  -e "PGPASSWORD=${PGPASSWORD}" \
+  -v "$(pwd)/${OUT_DIR#./}:/export" \
+  postgres:16 \
+  sh -lc "psql -h '$PG_HOST' -U '$PG_USER' -d '$PG_DB' -f /export/feedback.sql" \
+  > "$FEEDBACK_CSV"
+
+log "CSV rows exported: $(($(wc -l < "$FEEDBACK_CSV") - 1)) (excluding header)"
 
 # -----------------------
 # CSV -> XLSX
@@ -103,6 +127,21 @@ docker run --rm \
 import pandas as pd
 df = pd.read_csv('/export/db_export.csv')
 df.to_excel('/export/db_export.xlsx', index=False)
+print(f'Wrote XLSX with {len(df)} rows')
+PY
+  "
+
+  log "Converting CSV -> XLSX: ${FEEDBACK_XLSX}"
+
+docker run --rm \
+  -v "$(pwd)/${OUT_DIR#./}:/export" \
+  python:3.11-slim \
+  sh -lc "
+    pip -q install pandas openpyxl >/dev/null &&
+    python - <<'PY'
+import pandas as pd
+df = pd.read_csv('/export/feedback_export.csv')
+df.to_excel('/export/feedback_export.xlsx', index=False)
 print(f'Wrote XLSX with {len(df)} rows')
 PY
   "

@@ -53,6 +53,9 @@ export async function GET(req: Request) {
                 MIN(i.captured_at) AS captured_at,
                 i.device_type,
                 i.device_os,
+                STRING_AGG(i.id::text, ', ') AS image_ids,
+                STRING_AGG(i.poor_quality::text, ', ') AS image_poor_qualities,
+                STRING_AGG(i.contains_phi::text, ', ') AS image_contains_phi,
                 STRING_AGG(i.image_type, ', ') AS image_types
             FROM patients p
             JOIN lesions l ON p.patient_id = l.patient_id

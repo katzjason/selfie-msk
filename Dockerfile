@@ -3,6 +3,10 @@ FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
+# APP VERSION SETTINGS
+ARG NEXT_PUBLIC_VERSION=dev
+ENV NEXT_PUBLIC_VERSION=$NEXT_PUBLIC_VERSION
+
 # Install Python + venv + build tooling (some py deps may need compilation)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
@@ -35,6 +39,8 @@ RUN \
 
 COPY . .
 
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

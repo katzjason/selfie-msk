@@ -5,6 +5,11 @@ import MenuIcon from '@/app/components/menu-icon';
 import { FeedbackProvider, usefeedback } from '@/app/components/feedback-provider';
 import EnlargedImage from '@/app/components/enlarged-image';
 import { useRouter } from 'next/navigation';
+import Switch from '@mui/material/Switch';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
     
 type Row = {
     age_range: string;
@@ -19,8 +24,11 @@ type Row = {
 }
 
 type imageMetadata = {
+    id: number;
     image_type: string;
     file: string;
+    poor_quality: boolean;
+    contains_phi: boolean;
 }
 
 const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
@@ -78,6 +86,9 @@ function DashboardContent() {
     const [dbSize, setDbSize] = useState<number>(0);
     const [enlargedImage, setEnlargedImage] = useState<string>("");
     const [enlargedImageType, setEnlargedImageType] = useState<string>("");
+    const [enlargedImageId, setEnlargedImageId] = useState<number>(0);
+    const [enlargedImagePHI, setEnlargedImagePHI] = useState<boolean>(false);
+    const [enlargedImageQuality, setEnlargedImageQuality] = useState<boolean>(false);
 
     // Save to localStorage when fields change
     useEffect(() => {
@@ -118,50 +129,65 @@ function DashboardContent() {
         };
         }, [enlargedImage]);
 
+    // Function to refetch data
+    const refetchData = async () => {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (anatomicSite) params.append("anatomicSite", anatomicSite);
+        if (diagnosis) params.append("diagnosis", diagnosis);
+        if (size) params.append("last", size.toString());
+        const res = await fetch("/api/db?" + params.toString());
+        const json = await res.json();
+        setData(json.data);
+
+        // Preprocess queried data
+        for (let i = 0; i < json.data.length; i++){
+            const lesion_id : number = json.data[i].lesion_id;
+            const filepaths : string[] = json.data[i].filepaths.split(", ");
+            const image_types : string[] = json.data[i].image_types.split(", ");
+            const image_ids : string[] = json.data[i].image_ids.split(", ");
+            const image_poor_qualities : boolean[] = json.data[i].image_poor_qualities.split(", ").map((s: string) => s === "true");
+            const image_contains_phi : boolean[] = json.data[i].image_contains_phi.split(", ").map((s: string) => s === "true");
+            let metadata = new Array(5)
+
+            for (let j = 0; j < filepaths.length; j++){
+                const idx : number | undefined = image_type_indices[image_types[j]];
+                if (typeof idx !== "undefined") {
+                    metadata[idx] = { 
+                        id: parseInt(image_ids[j], 10),
+                        image_type: image_types[j], 
+                        file: filepaths[j],
+                        poor_quality: image_poor_qualities[j] || false,
+                        contains_phi: image_contains_phi[j] || false
+                    };
+                }
+            }
+
+            // filling in missing data
+            for (let k = 0; k < 5; k++){
+                if(metadata[k] == undefined){
+                    metadata[k] = {
+                        id: 0,
+                        image_type: reverse_image_type_indices[k], 
+                        file: "N/A",
+                        poor_quality: false,
+                        contains_phi: false
+                    }
+                }
+            }
+
+            processedData.current[lesion_id] = metadata;
+        }
+        setLoading(false);
+    };
+
 
     // Query DB whenever any filter changes
     useEffect(() => {
         setLoading(true);
         setData([]); // Hide results for flicker
 
-        
-        const timer = setTimeout(async () => {
-            const params = new URLSearchParams();
-            if (anatomicSite) params.append("anatomicSite", anatomicSite);
-            if (diagnosis) params.append("diagnosis", diagnosis);
-            if (size) params.append("last", size.toString());
-            const res = await fetch("/api/db?" + params.toString());
-            const json = await res.json();
-            setData(json.data);
-            // console.log(json.data.type);
-            console.log(json.data);
-            
-
-            // Preprocess queried data
-            for (let i = 0; i < json.data.length; i++){
-                const lesion_id : number = json.data[i].lesion_id;
-                const filepaths : string[] = json.data[i].filepaths.split(", ");
-                const image_types : string[] = json.data[i].image_types.split(", ");
-                let metadata = new Array(5)
-
-                for (let j = 0; j < filepaths.length; j++){
-                    const idx : number | undefined = image_type_indices[image_types[j]];
-                    if (typeof idx !== "undefined") {
-                        metadata[idx] = { image_type: image_types[j], file: filepaths[j] };
-                    }
-                }
-
-                // filling in missing data
-                for (let k = 0; k < 5; k++){
-                    if(metadata[k] == undefined){
-                        metadata[k] = {image_type: reverse_image_type_indices[k], file: "N/A"}
-                    }
-                }
-
-                processedData.current[lesion_id] = metadata;
-            }
-            setLoading(false);
-        }, 300);
+        const timer = setTimeout(refetchData, 300);
         return () => clearTimeout(timer);
     }, [anatomicSite, diagnosis, size]);
 
@@ -258,16 +284,25 @@ function DashboardContent() {
                                         {value.file == "N/A" ? (
                                             <div className="flex flex-col items-center justify-center bg-gray-200 w-full h-full font-bold rounded-lg text-gray-600">NOT TAKEN</div>
                                         ) : (
-                                            <img
-                                                key={idx}
-                                                className="w-full object-cover rounded-lg max-h-[350px] md:max-h-[420px] hover:cursor-pointer"
-                                                src={`https://172.28.37.105/api/images/${encodeURIComponent(value.file.substring(13))}`}
-                                                alt={value.image_type}
-                                                onClick={() => {
-                                                    setEnlargedImage(`https://172.28.37.105/api/images/${encodeURIComponent(value.file.substring(13))}`);
-                                                    setEnlargedImageType(value.image_type);
-                                                }}
-                                            />
+                                            <div className="relative">
+                                                <div className="absolute top-1 right-1 z-10 flex flex-row gap-1">
+                                                    {value.contains_phi && <div className="bg-red-500 text-white px-1 py-1 rounded font-bold text-xs">Contains PHI</div>}
+                                                    {value.poor_quality && <div className="bg-orange-500 text-white px-1 py-1 rounded font-bold text-xs">Poor Quality</div>}
+                                                </div>
+                                                <img
+                                                    key={idx}
+                                                    className="w-full object-cover rounded-lg max-h-[350px] md:max-h-[420px] hover:cursor-pointer"
+                                                    src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/images/${encodeURIComponent(value.file.substring(13))}`}
+                                                    alt={value.image_type}
+                                                    onClick={() => {
+                                                        setEnlargedImage(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/images/${encodeURIComponent(value.file.substring(13))}`);
+                                                        setEnlargedImageType(value.image_type);
+                                                        setEnlargedImageId(value.id);
+                                                        setEnlargedImagePHI(value.contains_phi);
+                                                        setEnlargedImageQuality(value.poor_quality);
+                                                    }}
+                                                />
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -279,22 +314,124 @@ function DashboardContent() {
 
             {enlargedImage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-200/90">
-                    <div className="relative">
-                        <button
-                            className="absolute top-8 right-2 z-10"
-                            onClick={() => {
-                                setEnlargedImage("");
-                                setEnlargedImageType("")}}
-                            aria-label="Close"
-                            >
-                            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow hover:cursor-pointer">
-                                <span className="text-3xl font-bold bg-gradient-to-br from-yellow-200 to-pink-500 bg-clip-text text-transparent ">
-                                    &times;
-                                </span>
+                    <div className="flex flex-col items-center gap-4">
+                        {/* Controls Row - Toggles and X button */}
+                        <div className="flex flex-row items-start gap-4">
+                            {/* PHI Toggle */}
+                            <div className="bg-white rounded-lg shadow-lg p-2">
+                                <div className="text-xs font-semibold text-gray-700 mb-2 text-center">PHI Status</div>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={async () => {
+                                            setEnlargedImagePHI(false);
+                                            let formData = new FormData();
+                                            formData.append("image_id", String(enlargedImageId));
+                                            formData.append("contains_phi", "false");
+                                            await fetch("/api/db/manual_phi", {
+                                            method: "POST",
+                                            body: formData
+                                            });
+                                            await refetchData();
+                                        }}
+                                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                                            !enlargedImagePHI
+                                                ? 'bg-green-500 text-white shadow'
+                                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        }`}
+                                    >
+                                        No PHI
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            setEnlargedImagePHI(true);
+                                            let formData = new FormData();
+                                            formData.append("image_id", String(enlargedImageId));
+                                            formData.append("contains_phi", "true");
+                                            await fetch("/api/db/manual_phi", {
+                                            method: "POST",
+                                            body: formData
+                                            });
+                                            await refetchData();
+                                        }}
+                                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                                            enlargedImagePHI
+                                                ? 'bg-red-500 text-white shadow'
+                                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        }`}
+                                    >
+                                        Contains PHI
+                                    </button>
+                                </div>
                             </div>
-                        </button>
+
+                            {/* Quality Toggle */}
+                            <div className="bg-white rounded-lg shadow-lg p-2">
+                                <div className="text-xs font-semibold text-gray-700 mb-2 text-center">Image Quality</div>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={async () => {
+                                            setEnlargedImageQuality(false);
+                                            let formData = new FormData();
+                                            formData.append("image_id", String(enlargedImageId));
+                                            formData.append("poor_quality", "false");
+                                            await fetch("/api/db/manual_quality", {
+                                            method: "POST",
+                                            body: formData
+                                            });
+                                            await refetchData();
+                                        }}
+                                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                                            !enlargedImageQuality
+                                                ? 'bg-green-500 text-white shadow'
+                                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        }`}
+                                    >
+                                        Good Quality
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            setEnlargedImageQuality(true);
+                                            let formData = new FormData();
+                                            formData.append("image_id", String(enlargedImageId));
+                                            formData.append("poor_quality", "true");
+                                            await fetch("/api/db/manual_quality", {
+                                            method: "POST",
+                                            body: formData
+                                            });
+                                            await refetchData();
+                                        }}
+                                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                                            enlargedImageQuality
+                                                ? 'bg-orange-500 text-white shadow'
+                                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        }`}
+                                    >
+                                        Poor Quality
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Close Button */}
+                            <button
+                                onClick={() => {
+                                    setEnlargedImage("");
+                                    setEnlargedImageType("");
+                                    setEnlargedImageId(0);
+                                    setEnlargedImagePHI(false);
+                                    setEnlargedImageQuality(false);
+                                }}
+                                aria-label="Close"
+                            >
+                                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg hover:cursor-pointer hover:shadow-xl transition-shadow">
+                                    <span className="text-3xl font-bold bg-gradient-to-br from-yellow-200 to-pink-500 bg-clip-text text-transparent">
+                                        &times;
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
                     
-                    <EnlargedImage filepath={enlargedImage} image_type={enlargedImageType}/>
+                        {/* Enlarged Image */}
+                        <EnlargedImage filepath={enlargedImage} image_type={enlargedImageType}/>
                     </div>
                 </div>
             )}

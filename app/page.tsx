@@ -16,6 +16,7 @@ const malignantDiagnoses : string[] = ["BCC",  "SCC",  "Melanoma"];
 const raceOptions : string[] = ["White", "Hispanic/Latino/Spanish Origin of any race", "Black or African American", "Asian", "American Indian or Alaskan Native", "Native Hawaiian or Other Pacific Islander", "Two or more races"];
 const anatomicSites : string[] = ["Head/Neck", "Upper Extremity", "Lower Extremity", "Anterior Torso", "Lateral Torso", "Posterior Torso", "Palms/Soles"];
 const FIRST_VISIT_KEY = "hasSeenMenu";
+const vienna = process.env.NEXT_PUBLIC_VERSION === "MedUniWien";
 
 function HomeContent() {
     const router = useRouter();
@@ -215,7 +216,7 @@ function HomeContent() {
                         }
                 ></FormField>)} */}
 
-                <FormField label="Self-reported Race" requiredFlag={false}
+                {!vienna && (<FormField label="Self-reported Race" requiredFlag={false}
                     children={
                         <select
                           value={race ?? ''}
@@ -229,6 +230,7 @@ function HomeContent() {
                         </select>
                     }
                 ></FormField>
+                )}
             </div>
             )}
 
