@@ -1,69 +1,180 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { readFile, unlink } from 'fs/promises';
-import path from 'path';
+import { pool } from '../db/pool';
+import archiver from 'archiver';
+import ExcelJS from 'exceljs';
 import { existsSync } from 'fs';
+import path from 'path';
+import { Readable } from 'stream';
 
-const execAsync = promisify(exec);
+const IMAGE_DIR = process.env.IMAGE_DIR || '/data/images';
 
 export async function POST(request: Request) {
   try {
-    // Get the PGPASSWORD from request body or environment
     const body = await request.json();
-    const lastMonths = body.lastMonths || 'all'; // '1', '2', '3', '6', or 'all'
-    const phiAllowed = body.phiAllowed === "All"; // true if "All", false otherwise
-    const goodQualityOnly = body.goodQualityOnly === "Good quality only"; // true if filtering for good quality
+    const lastMonths = body.lastMonths || 'All';
+    const phiAllowed = body.phiAllowed === "All";
+    const goodQualityOnly = body.goodQualityOnly === "Good quality only";
 
-    const pgPassword = body.pgPassword || process.env.PGPASSWORD || 'app_password';
+    console.log('Starting export with filters:', { lastMonths, phiAllowed, goodQualityOnly });
 
-    // Execute the export script
-    const scriptPath = path.join(process.cwd(), 'export.sh');
-    const exportDir = path.join(process.cwd(), 'export');
+    // Build WHERE clause based on filters
+    const whereClauses: string[] = [];
+    const queryParams: any[] = [];
+    let paramIndex = 1;
 
-    console.log('Starting export...');
-    
-    // Run the export script with password and filter parameters
-    const { stdout, stderr } = await execAsync(
-      `PGPASSWORD=${pgPassword} LAST_MONTHS=${lastMonths || 'all'} PHI_ALLOWED=${phiAllowed ? 'true' : 'false'} GOOD_QUALITY_ONLY=${goodQualityOnly ? 'true' : 'false'} bash ${scriptPath}`,
-      {
-        cwd: process.cwd(),
-        timeout: 300000, // 5 minute timeout
-      }
-    );
-
-    console.log('Export script output:', stdout);
-    if (stderr) console.error('Export script stderr:', stderr);
-
-    // Find the generated tar.gz file
-    // The script names it like: selfie_export_YYYYMMDD_HHMMSS.tar.gz
-    const { stdout: lsOutput } = await execAsync(`ls -t ${exportDir}/../selfie_export_*.tar.gz | head -1`);
-    const tarFilePath = lsOutput.trim();
-
-    if (!existsSync(tarFilePath)) {
-      throw new Error('Export file not found');
+    if (lastMonths !== 'all') {
+      whereClauses.push(`i.captured_at >= NOW() - INTERVAL '${lastMonths} months'`);
     }
 
-    // Read the file
-    const fileBuffer = await readFile(tarFilePath);
-    const fileName = path.basename(tarFilePath);
+    if (!phiAllowed) {
+      whereClauses.push(`i.contains_phi = false`);
+    }
 
-    // Clean up the generated file after a delay (optional)
-    setTimeout(async () => {
-      try {
-        await unlink(tarFilePath);
-        console.log('Cleaned up export file:', tarFilePath);
-      } catch (err) {
-        console.error('Failed to clean up export file:', err);
+    if (goodQualityOnly) {
+      whereClauses.push(`i.poor_quality = false`);
+    }
+
+    const whereClause = whereClauses.length > 0 
+      ? `WHERE ${whereClauses.join(' AND ')}` 
+      : '';
+
+    // Query for main data export
+    const mainQuery = `
+      SELECT * 
+      FROM patients p
+      JOIN (
+        SELECT *
+        FROM lesions l
+        JOIN images i
+        ON l.id = i.lesion_id
+        ${whereClause}
+      ) AS t1
+      ON p.patient_id = t1.patient_id
+    `;
+
+    // Query for feedback
+    const feedbackQuery = `SELECT * FROM bug_reports`;
+
+    console.log('Executing database queries...');
+    const [mainResult, feedbackResult] = await Promise.all([
+      pool.query(mainQuery),
+      pool.query(feedbackQuery)
+    ]);
+
+    console.log(`Exported ${mainResult.rows.length} main records, ${feedbackResult.rows.length} feedback records`);
+
+    // Create Excel files
+    const mainWorkbook = new ExcelJS.Workbook();
+    const mainSheet = mainWorkbook.addWorksheet('Data');
+    
+    if (mainResult.rows.length > 0) {
+      // Add headers
+      const columns = Object.keys(mainResult.rows[0]).map(key => ({
+        header: key,
+        key: key,
+        width: 15
+      }));
+      mainSheet.columns = columns;
+      
+      // Add rows
+      mainSheet.addRows(mainResult.rows);
+    }
+
+    const feedbackWorkbook = new ExcelJS.Workbook();
+    const feedbackSheet = feedbackWorkbook.addWorksheet('Feedback');
+    
+    if (feedbackResult.rows.length > 0) {
+      const columns = Object.keys(feedbackResult.rows[0]).map(key => ({
+        header: key,
+        key: key,
+        width: 15
+      }));
+      feedbackSheet.columns = columns;
+      feedbackSheet.addRows(feedbackResult.rows);
+    }
+
+    // Collect unique image paths
+    const imagePaths = new Set<string>();
+    for (const row of mainResult.rows) {
+      const filepath = row.file_path || row.filepaths || row.filepath;
+      if (filepath && filepath !== 'N/A') {
+        // Handle comma-separated paths
+        const paths = filepath.split(', ').map((p: string) => p.trim());
+        for (let imgPath of paths) {
+          // Strip /data/images/ or data/images/ prefix if present
+          if (imgPath.startsWith('/data/images/')) {
+            imgPath = imgPath.substring('/data/images/'.length);
+          } else if (imgPath.startsWith('data/images/')) {
+            imgPath = imgPath.substring('data/images/'.length);
+          }
+          if (imgPath) {
+            imagePaths.add(imgPath);
+          }
+        }
       }
-    }, 5000);
+    }
 
-    // Return the file as a download
-    return new NextResponse(fileBuffer, {
+    console.log(`Collected ${imagePaths.size} unique image paths`);
+
+    // Create archive stream
+    const archive = archiver('tar', {
+      gzip: true,
+      gzipOptions: { level: 6 }
+    });
+
+    // Track archive errors
+    archive.on('error', (err) => {
+      console.error('Archive error:', err);
+      throw err;
+    });
+
+    // Add Excel files to archive
+    const mainBuffer = await mainWorkbook.xlsx.writeBuffer();
+    const feedbackBuffer = await feedbackWorkbook.xlsx.writeBuffer();
+    
+    archive.append(Buffer.from(mainBuffer), { name: 'export/db_export.xlsx' });
+    archive.append(Buffer.from(feedbackBuffer), { name: 'export/feedback_export.xlsx' });
+
+    // Add images to archive
+    let imagesAdded = 0;
+    let imagesMissing = 0;
+    
+    for (const imgPath of imagePaths) {
+      const fullPath = path.join(IMAGE_DIR, imgPath);
+      if (existsSync(fullPath)) {
+        archive.file(fullPath, { name: `export/images/${imgPath}` });
+        imagesAdded++;
+      } else {
+        console.warn(`Image not found: ${fullPath}`);
+        imagesMissing++;
+      }
+    }
+
+    console.log(`Added ${imagesAdded} images to archive, ${imagesMissing} missing`);
+
+    // Finalize archive
+    archive.finalize();
+
+    // Convert stream to buffer for response
+    const chunks: Buffer[] = [];
+    archive.on('data', (chunk) => chunks.push(chunk));
+
+    await new Promise((resolve, reject) => {
+      archive.on('end', resolve);
+      archive.on('error', reject);
+    });
+
+    const archiveBuffer = Buffer.concat(chunks);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').split('-').slice(0, 3).join('') + '_' + new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+    const fileName = `selfie_export_${timestamp}.tar.gz`;
+
+    console.log('Export complete:', fileName);
+
+    return new NextResponse(archiveBuffer, {
       headers: {
         'Content-Type': 'application/gzip',
         'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Content-Length': fileBuffer.length.toString(),
+        'Content-Length': archiveBuffer.length.toString(),
       },
     });
 

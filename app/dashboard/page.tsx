@@ -246,7 +246,7 @@ function DashboardContent() {
 
                 {/* Filter Quantity */}
                 <select
-                    value={size ?? 1}
+                    value={isNaN(size) ? 1 : size}
                     onChange={(e) => setSize(Number(e.target.value))}
                     className={"w-[300px] text-gray-600 px-3 py-3 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-white transition-all cursor-pointer "}
                 >
