@@ -65,7 +65,7 @@ echo "Using LAN_IP=${LAN_IP}"
 echo "Using APP_DOMAIN=${APP_DOMAIN}"
 
 # ---------- clone repo ----------
-REPO_URL="https://github.com/you/yourapp.git"   # TODO: set real repo
+REPO_URL="https://github.mskcc.org/katzj2/selfie-app"   # TODO: set to public repo
 APP_DIR="selfie"                               
 
 if [[ ! -d "${APP_DIR}" ]]; then

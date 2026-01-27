@@ -40,16 +40,24 @@ export async function POST(request: Request) {
 
     // Query for main data export
     const mainQuery = `
-      SELECT * 
+      SELECT 
+        p.*,
+        l.id as lesion_id,
+        l.anatomic_site,
+        l.clinical_diagnosis,
+        l.vectra_id,
+        l.biopsied,
+        i.image_type,
+        i.file_path,
+        i.device_type,
+        i.device_os,
+        i.captured_at,
+        i.poor_quality,
+        i.contains_phi
       FROM patients p
-      JOIN (
-        SELECT *
-        FROM lesions l
-        JOIN images i
-        ON l.id = i.lesion_id
-        ${whereClause}
-      ) AS t1
-      ON p.patient_id = t1.patient_id
+      JOIN lesions l ON p.patient_id = l.patient_id
+      JOIN images i ON l.id = i.lesion_id
+      ${whereClause}
     `;
 
     // Query for feedback
