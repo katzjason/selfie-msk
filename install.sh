@@ -65,19 +65,23 @@ echo "Using LAN_IP=${LAN_IP}"
 echo "Using APP_DOMAIN=${APP_DOMAIN}"
 
 # ---------- clone repo ----------
-REPO_URL="https://github.mskcc.org/katzj2/selfie-app"   # TODO: set to public repo
-APP_DIR="selfie"                               
+# REPO_URL="https://github.mskcc.org/katzj2/selfie-app"   # TODO: set to public repo
+# APP_DIR="selfie"                               
 
-if [[ ! -d "${APP_DIR}" ]]; then
-  echo "Cloning repo..."
-  git clone "${REPO_URL}" "${APP_DIR}"
-fi
-cd "${APP_DIR}"
+# if [[ ! -d "${APP_DIR}" ]]; then
+#   echo "Cloning repo..."
+#   git clone "${REPO_URL}" "${APP_DIR}"
+# fi
+# cd "${APP_DIR}"
+
+# After getting LAN_IP and APP_DOMAIN, add:
+read -r -p "Enter version identifier (default: dev, or MedUniWien): " VERSION_INPUT
+VERSION="${VERSION_INPUT:-dev}"
 
 # ---------- env + secrets ----------
 ENV_FILE=".env"
 CERT_DIR="./certs"
-KEY_FILE="${CERT_DIR}/seflie.key"
+KEY_FILE="${CERT_DIR}/selfie.key"
 CRT_FILE="${CERT_DIR}/selfie.crt"
 SECRETS_DIR="/opt/selfie/secrets"
 MRN_KEY_FILE="${SECRETS_DIR}/mrn_hmac_key"
@@ -104,6 +108,7 @@ cat > "${ENV_FILE}" <<EOF
 LAN_IP=${LAN_IP}
 APP_DOMAIN=${APP_DOMAIN}
 DB_PASSWORD=${DB_PASSWORD}
+VERSION=${VERSION}
 EOF
 chmod 600 "${ENV_FILE}"
 echo "Wrote ${ENV_FILE}"
@@ -169,11 +174,28 @@ else
 fi
 
 # ---------- start stack ----------
+# Stop any existing containers and remove the old database volume to ensure password is correct
+echo "Stopping any existing containers..."
+docker compose down 2>/dev/null || true
+
+# Check if postgres volume exists and ask to remove it
+if docker volume ls | grep -q "selfie-app_postgres_data"; then
+  echo "WARNING: Existing database volume found."
+  read -r -p "Remove existing database? This will DELETE ALL DATA (y/N): " REMOVE_DB
+  if [[ "${REMOVE_DB}" =~ ^[Yy]$ ]]; then
+    echo "Removing existing database volume..."
+    docker volume rm selfie-app_postgres_data
+  else
+    echo "Keeping existing database. Note: Password mismatch may cause issues."
+  fi
+fi
+
+echo "Starting services..."
 docker compose up -d
 
 echo ""
 echo "======================================"
 echo "App is starting."
-echo "Visit: https://${LAN_IP}/"
+echo "Visit: https://${LAN_IP}:8443/"
 echo "Trust certificate: ${CRT_FILE}"
 echo "======================================"

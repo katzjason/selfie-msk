@@ -4,7 +4,7 @@ services:
             context: .
             args:
                 NEXT_PUBLIC_VERSION: ${VERSION:-dev}
-                NEXT_PUBLIC_API_BASE_URL: https://${LAN_IP}
+                NEXT_PUBLIC_API_BASE_URL: https://${LAN_IP}:8443
         ports:
         - "3000:3000"
         environment:
@@ -12,7 +12,7 @@ services:
         - NODE_ENV=production
         - DATABASE_URL=postgresql://app:${DB_PASSWORD}@db:5432/selfie
         - MRN_KEY_PATH=/run/secrets/mrn_hmac_key
-        - NEXT_PUBLIC_API_BASE_URL=https://${LAN_IP}
+        - NEXT_PUBLIC_API_BASE_URL=https://${LAN_IP}:8443
         volumes:
         - selfie_images:/data/images
         - /opt/selfie/secrets/mrn_hmac_key:/run/secrets/mrn_hmac_key:ro
@@ -27,8 +27,8 @@ services:
     caddy:
         image: caddy:2
         ports:
-        - "0.0.0.0:443:443"
-        - "0.0.0.0:80:80"
+        - "0.0.0.0:8443:443"
+        - "0.0.0.0:8080:80"
         volumes:
         - ./Caddyfile:/etc/caddy/Caddyfile:ro
         - ./certs:/certs:ro
