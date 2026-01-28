@@ -57,12 +57,8 @@ if [[ -z "${LAN_IP}" ]]; then
   exit 1
 fi
 
-# Optional: if you also want to support a hostname or domain later, keep this.
-read -r -p "Optional: enter an app display name/host (press Enter to use LAN IP): " APP_DOMAIN_INPUT
-APP_DOMAIN="${APP_DOMAIN_INPUT:-$LAN_IP}"
 
 echo "Using LAN_IP=${LAN_IP}"
-echo "Using APP_DOMAIN=${APP_DOMAIN}"
 
 # ---------- clone repo ----------
 # REPO_URL="https://github.mskcc.org/katzj2/selfie-app"   # TODO: set to public repo
@@ -106,7 +102,6 @@ DB_PASSWORD="$(openssl rand -hex 24)"
 # Write to .env
 cat > "${ENV_FILE}" <<EOF
 LAN_IP=${LAN_IP}
-APP_DOMAIN=${APP_DOMAIN}
 DB_PASSWORD=${DB_PASSWORD}
 VERSION=${VERSION}
 EOF
@@ -196,6 +191,6 @@ docker compose up -d
 echo ""
 echo "======================================"
 echo "App is starting."
-echo "Visit: https://${LAN_IP}:8443/"
+echo "Visit: https://${LAN_IP}/"
 echo "Trust certificate: ${CRT_FILE}"
 echo "======================================"
