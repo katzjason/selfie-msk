@@ -4,16 +4,19 @@
   }
 }
 
-:443 {
+# Production domain with enterprise certificate
+https://snapcap.mskcc.org {
+  tls /certs/enterprise-ca.pem /certs/enterprise-ca.key
+  reverse_proxy web:3000
+}
+
+# Fallback for IP access (self-signed)
+https://{$LAN_IP} {
   tls /certs/selfie.crt /certs/selfie.key
   reverse_proxy web:3000
 }
 
+# HTTP redirect to HTTPS
 :80 {
   redir https://{host}{uri}
-}
-
-https://{$LAN_IP} {
-    tls /certs/selfie.crt /certs/selfie.key
-    reverse_proxy web:3000
 }

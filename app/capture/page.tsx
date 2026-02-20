@@ -43,6 +43,8 @@ export default function Capture() {
   const trackRef = useRef<MediaStreamTrack | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isLoadingCamera, setIsLoadingCamera] = useState(true);
   const [zoomRange, setZoomRange] = useState<{min: number, max: number} | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
   const router = useRouter();
@@ -90,6 +92,10 @@ export default function Capture() {
 
   const startCamera = async () => {
     try {
+
+      setIsLoadingCamera(true);
+      setCameraError(null);
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: "environment",
@@ -110,6 +116,9 @@ export default function Capture() {
 
     } catch (err) {
       console.log("Error starting camera:",err);
+      setCameraError(err instanceof Error ? err.message : "Failed to access camera");
+    } finally {
+      setIsLoadingCamera(false);
     }
   }
 
@@ -487,7 +496,31 @@ export default function Capture() {
     <div className="flex flex-col min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] justify-center">
       {/* Hidden canvas for image capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      {!!stream && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center pb-4">
+      {isLoadingCamera && (
+        <div className="flex-1 flex items-center justify-center bg-black text-white">
+          <div className="text-center">
+            <div className="text-xl mb-2">Loading camera...</div>
+            <div className="text-sm opacity-70">Please allow camera access</div>
+          </div>
+        </div>
+      )}
+
+      {true && (
+        <div className="flex-1 flex items-center justify-center bg-black text-white pt-10">
+          <div className="text-center px-4">
+            <div className="text-xl mb-2 text-red-500">Camera Error</div>
+            <div className="text-sm mb-4">{cameraError}</div>
+            <button 
+              onClick={startCamera}
+              className="px-4 py-2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {stream && !isLoadingCamera && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center pb-4">
       {/* Instruction bar at top */}
       <div className="mb-2 rounded-xl bg-black/70 text-white px-3 py-2 flex items-center justify-between">
         <div className="flex flex-col">
