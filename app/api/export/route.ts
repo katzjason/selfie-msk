@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const queryParams: any[] = [];
     let paramIndex = 1;
 
-    if (lastMonths !== 'all') {
+    if (lastMonths.toLowerCase() !== 'all') {
       whereClauses.push(`i.captured_at >= NOW() - INTERVAL '${lastMonths} months'`);
     }
 

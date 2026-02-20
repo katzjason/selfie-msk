@@ -150,8 +150,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, uploadId, imagesWritten: stored.length });
   } catch (err: any) {
     console.log(err.message)
-    //try { await client.query("ROLLBACK"); } catch {}
-    //await Promise.allSettled(writtenFiles.map((p) => fs.rm(p, { force: true })));
+    try { await client.query("ROLLBACK"); } catch {}
+    await Promise.allSettled(writtenFiles.map((p) => fs.rm(p, { force: true })));
     return NextResponse.json({ ok: false, error: err?.message ?? "Unknown failure" }, { status: 500 });
   } finally {
     client.release();
