@@ -596,60 +596,54 @@ export default function Capture() {
 
       <div className="relative w-full flex-1 bg-black flex items-center justify-center overflow-visible pb-24">
         <div className="relative flex flex-col items-center" style={{ maxHeight: 'calc(100dvh - 200px)' }}>
-          <div className="relative">
-            {imageArr[stepIndex].url != "" ? ( // VIEWING IMAGE ALREADY TAKEN
-              <div className={`transition-transform duration-300 ${
-                isSliding ? '-translate-x-[100vw]' : 'translate-x-0'
-              }`}>
-                <img src={imageArr[stepIndex].url} className="w-full h-auto object-contain bg-black" />
-                {/* Quality Score */}
-                <div className="absolute bottom-0 flex flex-col w-full bg-black/50">
-
-              
-                  <div className="flex flex-row w-full">
-                    <div className="text-xs flex items-center justify-start flex font-semibold pt-2 px-2 whitespace-nowrap">Quality Score</div>
-                    
-                    <div className="w-full pl-4 pb-1 pt-3 pr-2">
-                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full overflow-hidden transition-all ${ 
-                            imageArr[stepIndex].score > 80 
-                              ? 'bg-green-500' 
-                              : imageArr[stepIndex].score > 60 
-                              ? 'bg-yellow-500' 
-                              : 'bg-red-500' 
-                          }`} 
-                          style={{ width: `${Math.max(imageArr[stepIndex].score, 25)}%` }} 
-                        />
+          <div className="relative inline-block">
+              <video
+                ref={videoCallbackRef}
+                autoPlay
+                playsInline
+                className="max-w-full max-h-[calc(100dvh-150px)] w-auto h-auto object-contain bg-black cursor-pointer block"
+                onClick={supportsFocus ? handleVideoClick : () => {console.log("Tap to focus is not supported")}}
+              />
+              {!imageArr[stepIndex].url && <CornerMarkers />}
+              {/* Shutter effect overlay */}
+              {isCapturing && (
+                <div className="absolute inset-0 bg-black z-10" />
+              )}
+              {/* Show captured image overlay for 1 second */}
+              {showCapturedImage && imageArr[stepIndex].url && (
+                <div className="absolute inset-0 bg-black z-20">
+                  <img src={imageArr[stepIndex].url} className="w-full h-full object-contain" />
+                </div>
+              )}
+              {/* Captured image + quality bar overlay */}
+              {imageArr[stepIndex].url != "" && (
+                <div className={`absolute inset-0 z-10 transition-transform duration-300 ${
+                  isSliding ? '-translate-x-[100vw]' : 'translate-x-0'
+                }`}>
+                  <img src={imageArr[stepIndex].url} className="w-full h-full object-contain bg-black" />
+                  {/* Quality Score */}
+                  <div className="absolute bottom-0 flex flex-col w-full bg-black/50">
+                    <div className="flex flex-row w-full">
+                      <div className="text-xs flex items-center justify-start flex font-semibold pt-2 px-2 whitespace-nowrap">Quality Score</div>
+                      <div className="w-full pl-4 pb-1 pt-3 pr-2">
+                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full overflow-hidden transition-all ${
+                              imageArr[stepIndex].score > 80
+                                ? 'bg-green-500'
+                                : imageArr[stepIndex].score > 60
+                                ? 'bg-yellow-500'
+                                : 'bg-red-500'
+                            }`}
+                            style={{ width: `${Math.max(imageArr[stepIndex].score, 25)}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
+                    <div className="text-xs flex justify-center w-full pb-1">{imageArr[stepIndex].description}</div>
                   </div>
-                  <div className="text-xs flex justify-center w-full pb-1">{imageArr[stepIndex].description}</div>
                 </div>
-                
-              </div>
-            ) : (
-              <div className="relative inline-block">
-                <video
-                  ref={videoCallbackRef}
-                  autoPlay
-                  playsInline 
-                  className="max-w-full max-h-[calc(100dvh-150px)] w-auto h-auto object-contain bg-black cursor-pointer block" 
-                  onClick={supportsFocus ? handleVideoClick : () => {console.log("Tap to focus is not supported")}}
-                />
-                <CornerMarkers />
-                {/* Shutter effect overlay */}
-                {isCapturing && (
-                  <div className="absolute inset-0 bg-black z-10" />
-                )}
-                {/* Show captured image overlay for 1 second */}
-                {showCapturedImage && imageArr[stepIndex].url && (
-                  <div className="absolute inset-0 bg-black z-20">
-                    <img src={imageArr[stepIndex].url} className="w-full h-full object-contain" />
-                  </div>
-                )}
-              </div>
-            )}        
+              )}
           </div>
 
             <div className="">
@@ -691,8 +685,7 @@ export default function Capture() {
             </div>
         </div>
         
-        {!imageArr[stepIndex].url && (
-          <div className="w-10 absolute right-0 top-1/2 -translate-y-1/2 flex flex-col items-center h-90 justify-between">
+        <div className={`w-10 absolute right-0 top-1/2 -translate-y-1/2 flex flex-col items-center h-90 justify-between ${imageArr[stepIndex].url ? 'invisible' : ''}`}>
             <div className="text-white text-2xl font-semibold pointer-events-none">+</div>
             {/* Zoom Slider */}
             <input
@@ -704,7 +697,7 @@ export default function Capture() {
               onInput={(e) => {
                 const z = Number((e.target as HTMLInputElement).value);
                 setZoom(z);        // UI thumb updates
-                scheduleZoom(z);   // camera updates “live”
+                scheduleZoom(z);   // camera updates "live"
               }}
               aria-orientation="vertical"
               className="slider-vertical -rotate-90"
@@ -714,7 +707,7 @@ export default function Capture() {
                 }}
             />
             <div className="text-white text-2xl font-semibold pointer-events-none">-</div>
-          </div>)}
+          </div>
         </div>
       
     </main>}
