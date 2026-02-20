@@ -122,6 +122,7 @@ export default function Capture() {
     } catch (err) {
       console.log("Error starting camera:",err);
       setCameraError(err instanceof Error ? err.message : "Failed to access camera");
+    } finally {
       setIsLoadingCamera(false);
     }
   }
