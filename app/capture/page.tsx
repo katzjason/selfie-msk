@@ -488,31 +488,33 @@ export default function Capture() {
 
 
     // POST request to /api/upload
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData
-    });
-    if(res.status == 200){
-      showToast("Uploaded Lesion No. " + lesionCounter.toString(), 4000);
-      updatePatient(prev => ({
-        lesionCounter: prev.lesionCounter + 1
-      }));
-      showToast("Uploaded Lesion No. " + lesionCounter.toString(), 4000);
-      updatePatient(prev => ({
-        lesionCounter: prev.lesionCounter + 1
-      }));
-      // Clear captured images from local storage
-      localStorage.removeItem("capturedImages");
-      // Revoke object URLs to free memory
-      imageArr.forEach(img => {
-        if (img.url) URL.revokeObjectURL(img.url);
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
       });
-      setImageArr(Array(photoSteps.length).fill({url: "", blob: null, description: "", score: 0, captureTime: ""}));
-      localStorage.setItem("showReset", "true");
-    } else {
-      showToast("Unknown Upload Failure", 4000);
+      if(res.status == 200){
+        showToast("Uploaded Lesion No. " + lesionCounter.toString(), 4000);
+        updatePatient(prev => ({
+          lesionCounter: prev.lesionCounter + 1
+        }));
+        // Clear captured images from local storage
+        localStorage.removeItem("capturedImages");
+        // Revoke object URLs to free memory
+        imageArr.forEach(img => {
+          if (img.url) URL.revokeObjectURL(img.url);
+        });
+        setImageArr(Array(photoSteps.length).fill({url: "", blob: null, description: "", score: 0, captureTime: ""}));
+        localStorage.setItem("showReset", "true");
+      } else {
+        const errorData = await res.json().catch(() => null);
+        const errorMsg = errorData?.error || `Upload failed (status ${res.status})`;
+        showToast("Upload Error: " + errorMsg, 4000);
+      }
+    } catch (err: any) {
+      showToast("Upload Error: " + (err?.message || "Network failure"), 4000);
     }
-    
+
     // Navigate back to page to capture next lesion
     router.back();
   }
