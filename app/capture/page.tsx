@@ -40,6 +40,13 @@ async function assessQuality( dataUrl : string) {
 
 export default function Capture() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  // Callback ref: whenever the video element mounts, attach the current stream
+  const videoCallbackRef = (el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (el && stream && el.srcObject !== stream) {
+      el.srcObject = stream;
+    }
+  };
   const trackRef = useRef<MediaStreamTrack | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -52,6 +59,8 @@ export default function Capture() {
   const {lesionCounter, updatePatient} = usePatient();
   const patient = usePatient();
   const [supportsFocus, setSupportsFocus] = useState<boolean>(false);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
 
   const photoSteps = [
     {
@@ -107,17 +116,12 @@ export default function Capture() {
 
       setStream(mediaStream); // saving the stream into device state
 
-      if (videoRef.current) { // attaching the stream to the video HTML element
-        videoRef.current.srcObject = mediaStream;
-      }
-
       const [track] = mediaStream.getVideoTracks();
       trackRef.current = track || null;
 
     } catch (err) {
       console.log("Error starting camera:",err);
       setCameraError(err instanceof Error ? err.message : "Failed to access camera");
-    } finally {
       setIsLoadingCamera(false);
     }
   }
@@ -273,19 +277,71 @@ export default function Capture() {
     };
   }, [])
 
+  // Attach stream to video element and confirm playback, with auto-retry
   useEffect(() => {
-    
     if (!stream) return;
-    initZoomCapabilities();
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-    }
-    // Apply zoom preset based on stepIndex: 5 for step 0
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const attachStream = () => {
+      const video = videoRef.current;
+      if (!video) {
+        // Video element may not be in the DOM yet; retry on next frame
+        requestAnimationFrame(() => {
+          if (!cancelled) attachStream();
+        });
+        return;
+      }
+
+      video.srcObject = stream;
+
+      const onCanPlay = () => {
+        if (cancelled) return;
+        clearTimeout(timeoutId);
+        retryCountRef.current = 0;
+        setIsLoadingCamera(false);
+        setCameraError(null);
+        initZoomCapabilities();
+      };
+
+      video.addEventListener('canplay', onCanPlay, { once: true });
+
+      // If video doesn't start within 5s, retry
+      timeoutId = setTimeout(() => {
+        if (cancelled) return;
+        video.removeEventListener('canplay', onCanPlay);
+
+        if (retryCountRef.current < maxRetries) {
+          retryCountRef.current += 1;
+          console.log(`Camera retry attempt ${retryCountRef.current}/${maxRetries}`);
+          // Stop old stream tracks before retrying
+          stream.getTracks().forEach(t => t.stop());
+          setStream(null);
+          startCamera();
+        } else {
+          setCameraError("Camera failed to start after multiple attempts");
+          setIsLoadingCamera(false);
+        }
+      }, 5000);
+    };
+
+    attachStream();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [stream]);
+
+  // Handle zoom presets when step changes
+  useEffect(() => {
+    if (!stream) return;
     if(stepIndex == 0){
       setZoom(5);
       applyZoomNow(5);
     }
-  }, [stream, stepIndex, imageArr]);
+  }, [stream, stepIndex]);
 
   function getDeviceCategory() {
     const ua = navigator.userAgent;
@@ -493,11 +549,12 @@ export default function Capture() {
 
 
   return (
-    <div className="flex flex-col min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] justify-center">
+    <div className="relative flex flex-col min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] justify-center">
       {/* Hidden canvas for image capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      {isLoadingCamera && (
-        <div className="flex-1 flex items-center justify-center bg-black text-white">
+      {/* Loading / error overlays */}
+      {isLoadingCamera && !cameraError && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black text-white">
           <div className="text-center">
             <div className="text-xl mb-2">Loading camera...</div>
             <div className="text-sm opacity-70">Please allow camera access</div>
@@ -505,13 +562,13 @@ export default function Capture() {
         </div>
       )}
 
-      {true && (
-        <div className="flex-1 flex items-center justify-center bg-black text-white pt-10">
+      {cameraError && !isLoadingCamera && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black text-white">
           <div className="text-center px-4">
             <div className="text-xl mb-2 text-red-500">Camera Error</div>
             <div className="text-sm mb-4">{cameraError}</div>
-            <button 
-              onClick={startCamera}
+            <button
+              onClick={() => { retryCountRef.current = 0; startCamera(); }}
               className="px-4 py-2 bg-gradient-to-br from-yellow-500 to-pink-500 rounded"
             >
               Retry
@@ -520,7 +577,7 @@ export default function Capture() {
         </div>
       )}
 
-      {stream && !isLoadingCamera && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center pb-4">
+      {stream && <main className="flex-1 flex flex-col p-2 w-full mx-auto overflow-hidden bg-black justify-center pb-4">
       {/* Instruction bar at top */}
       <div className="mb-2 rounded-xl bg-black/70 text-white px-3 py-2 flex items-center justify-between">
         <div className="flex flex-col">
@@ -572,9 +629,9 @@ export default function Capture() {
               </div>
             ) : (
               <div className="relative inline-block">
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
+                <video
+                  ref={videoCallbackRef}
+                  autoPlay
                   playsInline 
                   className="max-w-full max-h-[calc(100dvh-150px)] w-auto h-auto object-contain bg-black cursor-pointer block" 
                   onClick={supportsFocus ? handleVideoClick : () => {console.log("Tap to focus is not supported")}}
