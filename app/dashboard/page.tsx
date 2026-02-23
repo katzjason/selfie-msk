@@ -4,7 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import MenuIcon from '@/app/components/menu-icon';
 import { FeedbackProvider, usefeedback } from '@/app/components/feedback-provider';
 import EnlargedImage from '@/app/components/enlarged-image';
+import EditLesionModal from '@/app/components/edit-lesion-modal';
 import { useRouter } from 'next/navigation';
+import { Pencil } from 'lucide-react';
 import Switch from '@mui/material/Switch';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -89,6 +91,7 @@ function DashboardContent() {
     const [enlargedImageId, setEnlargedImageId] = useState<number>(0);
     const [enlargedImagePHI, setEnlargedImagePHI] = useState<boolean>(false);
     const [enlargedImageQuality, setEnlargedImageQuality] = useState<boolean>(false);
+    const [editingLesionId, setEditingLesionId] = useState<number | null>(null);
 
     // Save to localStorage when fields change
     useEffect(() => {
@@ -264,8 +267,15 @@ function DashboardContent() {
                     <div className="w-[300px] text-white text-lg font-bold mt-20 uppercase flex flex-col items-center">No Results Found</div> : 
                     <div className="flex flex-col w-full">
                     {loading ? null : data.map((row, i)=>(
-                        <div key={i} className="flex flex-col bg-white rounded-xl p-4 shadow-lg text-black mt-10 pt-5 pb-5">
-                            <div className="block text-sm text-gray-600 tracking-wide mb-2">
+                        <div key={i} className="relative flex flex-col bg-white rounded-xl p-4 shadow-lg text-black mt-10 pt-5 pb-5">
+                            <button
+                                className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-all"
+                                onClick={() => setEditingLesionId(row.lesion_id)}
+                                aria-label="Edit lesion"
+                            >
+                                <Pencil className="w-4 h-4 text-gray-500" />
+                            </button>
+                            <div className="block text-sm text-gray-600 tracking-wide mb-2 pr-10">
                                 <div><span className="font-semibold uppercase ">Age Range: </span> {row.age_range?? "N/A"}</div>
                                 <div><span className="font-semibold uppercase ">Diagnosis: </span> {row.clinical_diagnosis?? "N/A"}</div>
                                 <div><span className="font-semibold uppercase ">Anatomic Site: </span> {row.anatomic_site?? "N/A"}</div>
@@ -434,6 +444,21 @@ function DashboardContent() {
                         <EnlargedImage filepath={enlargedImage} image_type={enlargedImageType}/>
                     </div>
                 </div>
+            )}
+
+            {editingLesionId !== null && (
+                <EditLesionModal
+                    lesionId={editingLesionId}
+                    onClose={() => setEditingLesionId(null)}
+                    onSaved={() => {
+                        setEditingLesionId(null);
+                        refetchData();
+                    }}
+                    onDeleted={() => {
+                        setEditingLesionId(null);
+                        refetchData();
+                    }}
+                />
             )}
 
             {/* Sidebar overlay */}
