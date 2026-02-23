@@ -35,7 +35,6 @@ services:
         - caddy_data:/data
         - caddy_config:/config
         environment:
-        - LAN_IP=${LAN_IP:?LAN_IP is required. Run ./install.sh}
         - TLS_CERT_FILE=${TLS_CERT_FILE:-selfie.crt}
         - TLS_KEY_FILE=${TLS_KEY_FILE:-selfie.key}
         depends_on:
