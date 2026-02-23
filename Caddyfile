@@ -6,7 +6,7 @@
 
 # HTTPS on port 443
 https://{$LAN_IP} {
-  tls /certs/selfie.crt /certs/selfie.key
+  tls /certs/{$TLS_CERT_FILE} /certs/{$TLS_KEY_FILE}
   reverse_proxy web:3000
 }
 

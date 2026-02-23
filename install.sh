@@ -76,8 +76,10 @@ VERSION="${VERSION_INPUT:-dev}"
 # ---------- env + secrets ----------
 ENV_FILE=".env"
 CERT_DIR="./certs"
-KEY_FILE="${CERT_DIR}/selfie.key"
-CRT_FILE="${CERT_DIR}/selfie.crt"
+SELFIE_KEY_FILE="${CERT_DIR}/selfie.key"
+SELFIE_CRT_FILE="${CERT_DIR}/selfie.crt"
+ENTERPRISE_KEY_FILE="${CERT_DIR}/enterprise-ca.key"
+ENTERPRISE_CRT_FILE="${CERT_DIR}/enterprise-ca.pem"
 SECRETS_DIR="/opt/selfie/secrets"
 MRN_KEY_FILE="${SECRETS_DIR}/mrn_hmac_key"
 
@@ -95,24 +97,15 @@ else
   echo "MRN HMAC key already exists; leaving as-is."
 fi
 
-# Generate DB password if not already set
+# Generate DB password
 DB_PASSWORD="$(openssl rand -hex 24)"
-
-# Write to .env
-cat > "${ENV_FILE}" <<EOF
-LAN_IP=${LAN_IP}
-DB_PASSWORD=${DB_PASSWORD}
-VERSION=${VERSION}
-EOF
-chmod 600 "${ENV_FILE}"
-echo "Wrote ${ENV_FILE}"
 
 # ---------- cert generation ----------
 regen="false"
-if [[ ! -f "${KEY_FILE}" || ! -f "${CRT_FILE}" ]]; then
+if [[ ! -f "${SELFIE_KEY_FILE}" || ! -f "${SELFIE_CRT_FILE}" ]]; then
   regen="true"
 else
-  if ! openssl x509 -in "${CRT_FILE}" -noout -text | grep -q "IP Address:${LAN_IP}"; then
+  if ! openssl x509 -in "${SELFIE_CRT_FILE}" -noout -text | grep -q "IP Address:${LAN_IP}"; then
     regen="true"
   fi
 fi
@@ -151,24 +144,75 @@ EOF
   umask 077
   openssl req -x509 -nodes -days 365 \
     -newkey rsa:2048 \
-    -keyout "${KEY_FILE}" \
-    -out "${CRT_FILE}" \
+    -keyout "${SELFIE_KEY_FILE}" \
+    -out "${SELFIE_CRT_FILE}" \
     -config "${OPENSSL_CNF}"
 
   rm -f "${OPENSSL_CNF}"
 
-  chmod 600 "${KEY_FILE}"
-  chmod 644 "${CRT_FILE}"
+  chmod 600 "${SELFIE_KEY_FILE}"
+  chmod 644 "${SELFIE_CRT_FILE}"
 
   echo "Created:"
-  echo "  ${KEY_FILE}"
-  echo "  ${CRT_FILE}"
+  echo "  ${SELFIE_KEY_FILE}"
+  echo "  ${SELFIE_CRT_FILE}"
 else
   echo "Cert already exists and matches LAN_IP; leaving as-is."
 fi
 
+# ---------- cert selection ----------
+TLS_CERT_FILE="$(basename "${SELFIE_CRT_FILE}")"
+TLS_KEY_FILE="$(basename "${SELFIE_KEY_FILE}")"
+SELECTED_CERT_PATH="${SELFIE_CRT_FILE}"
+
+if [[ -f "${ENTERPRISE_CRT_FILE}" && -f "${ENTERPRISE_KEY_FILE}" ]]; then
+  enterprise_matches_ip="false"
+  if openssl x509 -in "${ENTERPRISE_CRT_FILE}" -noout -text | grep -q "IP Address:${LAN_IP}"; then
+    enterprise_matches_ip="true"
+  fi
+
+  default_enterprise_choice="N"
+  if [[ "${enterprise_matches_ip}" == "true" ]]; then
+    default_enterprise_choice="Y"
+  fi
+
+  enterprise_prompt="y/N"
+  if [[ "${default_enterprise_choice}" == "Y" ]]; then
+    enterprise_prompt="Y/n"
+  fi
+
+  read -r -p "Use enterprise certificate (${ENTERPRISE_CRT_FILE}) for HTTPS on this host? (${enterprise_prompt}): " USE_ENTERPRISE_INPUT
+  use_enterprise_choice="${USE_ENTERPRISE_INPUT:-$default_enterprise_choice}"
+
+  if [[ "${use_enterprise_choice}" =~ ^[Yy]$ ]]; then
+    if [[ "${enterprise_matches_ip}" != "true" ]]; then
+      echo "WARNING: enterprise cert does not list LAN_IP=${LAN_IP} in Subject Alternative Name."
+      echo "         Browsers may show a certificate mismatch when accessing by IP."
+    fi
+    TLS_CERT_FILE="$(basename "${ENTERPRISE_CRT_FILE}")"
+    TLS_KEY_FILE="$(basename "${ENTERPRISE_KEY_FILE}")"
+    SELECTED_CERT_PATH="${ENTERPRISE_CRT_FILE}"
+    echo "Using enterprise certificate for TLS."
+  else
+    echo "Using self-signed certificate for TLS."
+  fi
+else
+  echo "Enterprise cert/key not found; using self-signed certificate for TLS."
+fi
+
+# Write to .env
+cat > "${ENV_FILE}" <<EOF
+LAN_IP=${LAN_IP}
+DB_PASSWORD=${DB_PASSWORD}
+VERSION=${VERSION}
+TLS_CERT_FILE=${TLS_CERT_FILE}
+TLS_KEY_FILE=${TLS_KEY_FILE}
+EOF
+chmod 600 "${ENV_FILE}"
+echo "Wrote ${ENV_FILE}"
+
 # ---------- start stack ----------
-# Stop any existing containers and remove the old database volume to ensure password is correct
+# Stop existing containers and optionally remove DB volume if credentials changed.
 echo "Stopping any existing containers..."
 docker compose down 2>/dev/null || true
 
@@ -191,5 +235,5 @@ echo ""
 echo "======================================"
 echo "App is starting."
 echo "Visit: https://${LAN_IP}/"
-echo "Trust certificate: ${CRT_FILE}"
+echo "TLS cert in use: ${SELECTED_CERT_PATH}"
 echo "======================================"
