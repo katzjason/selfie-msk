@@ -169,7 +169,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 transition-all"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 transition-all hover:cursor-pointer"
               aria-label="Delete lesion"
             >
               <Trash2 className="w-4 h-4 text-red-500" />
@@ -330,14 +330,14 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
           <div className="sticky bottom-0 bg-white rounded-b-2xl border-t border-gray-100 px-6 py-4 flex gap-3 justify-end">
             <button
               onClick={onClose}
-              className="px-5 py-2 rounded-xl bg-gray-200 text-gray-600 font-semibold text-sm uppercase tracking-wide hover:bg-gray-300 transition-all"
+              className="px-5 py-2 rounded-xl bg-gray-200 text-gray-600 font-semibold text-sm uppercase tracking-wide hover:bg-gray-300 transition-all hover:cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-2 rounded-xl bg-gradient-to-br from-yellow-500 to-pink-500 text-white font-semibold text-sm uppercase tracking-wide shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-gradient-to-br from-yellow-500 to-pink-500 text-white font-semibold text-sm uppercase tracking-wide shadow-lg hover:shadow-xl transition-all disabled:opacity-50 hover:cursor-pointer"
             >
               {saving ? "Saving..." : "Save"}
             </button>

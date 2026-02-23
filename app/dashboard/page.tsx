@@ -267,7 +267,7 @@ function DashboardContent() {
                     <div className="w-[300px] text-white text-lg font-bold mt-20 uppercase flex flex-col items-center">No Results Found</div> : 
                     <div className="flex flex-col w-full">
                     {loading ? null : data.map((row, i)=>(
-                        <div key={i} className="relative flex flex-col bg-white rounded-xl p-4 shadow-lg text-black mt-10 pt-5 pb-5">
+                        <div key={i} className="relative flex flex-col bg-white rounded-xl p-4 shadow-lg text-black mt-10 pt-5 pb-5 hover:cursor-pointer">
                             <button
                                 className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-all"
                                 onClick={() => setEditingLesionId(row.lesion_id)}
