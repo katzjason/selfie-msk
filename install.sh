@@ -73,17 +73,6 @@ echo "Using LAN_IP=${LAN_IP}"
 read -r -p "Enter version identifier (default: dev, or MedUniWien): " VERSION_INPUT
 VERSION="${VERSION_INPUT:-dev}"
 
-read -r -p "Enter production domain (leave blank if none, e.g. snapcap.mskcc.org): " APP_DOMAIN_INPUT
-APP_DOMAIN="${APP_DOMAIN_INPUT:-}"
-
-if [[ -n "${APP_DOMAIN}" ]]; then
-  echo "Using APP_DOMAIN=${APP_DOMAIN}"
-  if [[ ! -f "./certs/enterprise-ca.pem" || ! -f "./certs/enterprise-ca.key" ]]; then
-    echo "WARNING: Production domain set but certs/enterprise-ca.pem and/or certs/enterprise-ca.key not found."
-    echo "         Place your TLS certificate chain and private key in the certs/ directory."
-  fi
-fi
-
 # ---------- env + secrets ----------
 ENV_FILE=".env"
 CERT_DIR="./certs"
@@ -114,7 +103,6 @@ cat > "${ENV_FILE}" <<EOF
 LAN_IP=${LAN_IP}
 DB_PASSWORD=${DB_PASSWORD}
 VERSION=${VERSION}
-APP_DOMAIN=${APP_DOMAIN}
 EOF
 chmod 600 "${ENV_FILE}"
 echo "Wrote ${ENV_FILE}"
@@ -202,9 +190,6 @@ docker compose up -d
 echo ""
 echo "======================================"
 echo "App is starting."
-if [[ -n "${APP_DOMAIN}" ]]; then
-  echo "Visit: https://${APP_DOMAIN}/"
-fi
 echo "Visit: https://${LAN_IP}/"
 echo "Trust certificate: ${CRT_FILE}"
 echo "======================================"
