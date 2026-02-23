@@ -4,7 +4,14 @@
   }
 }
 
-:443 {
+# Production domain with enterprise certificate (only active when APP_DOMAIN is set)
+https://{$APP_DOMAIN} {
+  tls /certs/enterprise-ca.pem /certs/enterprise-ca.key
+  reverse_proxy web:3000
+}
+
+# Fallback for IP access (self-signed)
+https://{$LAN_IP} {
   tls /certs/selfie.crt /certs/selfie.key
   reverse_proxy web:3000
 }

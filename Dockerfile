@@ -16,10 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Add enterprise certificate to trusted CA store
-COPY certs/enterprise-ca.pem /usr/local/share/ca-certificates/enterprise-ca.pem
-RUN chmod 644 /usr/local/share/ca-certificates/enterprise-ca.pem \
-    && update-ca-certificates
+# Add enterprise certificate to trusted CA store (optional — file may not exist for other users)
+COPY certs/enterprise-ca.pe[m] /usr/local/share/ca-certificates/
+RUN update-ca-certificates
 
 # Create venv and make it default
 RUN python3 -m venv /opt/venv
@@ -67,10 +66,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Add enterprise certificate to trusted CA store
-COPY certs/enterprise-ca.pem /usr/local/share/ca-certificates/enterprise-ca.pem
-RUN chmod 644 /usr/local/share/ca-certificates/enterprise-ca.pem \
-    && update-ca-certificates
+# Add enterprise certificate to trusted CA store (optional — file may not exist for other users)
+COPY certs/enterprise-ca.pe[m] /usr/local/share/ca-certificates/
+RUN update-ca-certificates
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"

@@ -48,7 +48,7 @@ const raceOptions = [
   "Two or more races"
 ];
 
-const selectClass = "w-full text-gray-600 px-3 py-2 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 transition-all cursor-pointer text-sm";
+const baseSelectClass = "w-full text-gray-600 px-3 py-2 bg-gray-50 border-2 rounded-lg focus:outline-none focus:border-gray-500 transition-all cursor-pointer text-sm";
 const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1";
 
 export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted }: EditLesionModalProps) {
@@ -58,6 +58,9 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<LesionDetail | null>(null);
+  const [showRequired, setShowRequired] = useState(false);
+  const [originalBiopsied, setOriginalBiopsied] = useState(false);
+  const [newMrn, setNewMrn] = useState("");
 
   // Prevent body scroll
   useEffect(() => {
@@ -86,6 +89,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
             biopsied: d.biopsied,
             clinical_diagnosis: d.clinical_diagnosis,
           });
+          setOriginalBiopsied(d.biopsied);
         } else {
           setError("Failed to load lesion data");
         }
@@ -102,29 +106,48 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
     setForm(prev => prev ? { ...prev, [field]: value } : prev);
   };
 
+  // Derived validation flags
+  const skinToneMissing = form ? !form.monk_skin_tone && !form.fitzpatrick_skin_type : false;
+  const biopsyNeedsMrn = form ? form.biopsied && !originalBiopsied : false;
+  const mrnMissing = biopsyNeedsMrn && newMrn.trim() === "";
+
   const handleSave = async () => {
     if (!form) return;
+
+    // Validation
+    if (skinToneMissing || mrnMissing) {
+      setShowRequired(true);
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
+      const body: any = {
+        patient: {
+          age_range: form.age_range,
+          sex: form.sex,
+          monk_skin_tone: form.monk_skin_tone,
+          fitzpatrick_skin_type: form.fitzpatrick_skin_type,
+          self_reported_race: form.self_reported_race,
+        },
+        lesion: {
+          anatomic_site: form.anatomic_site,
+          vectra_id: form.vectra_id,
+          biopsied: form.biopsied,
+          clinical_diagnosis: form.clinical_diagnosis,
+        },
+      };
+
+      // Include new MRN if biopsy was toggled from false to true
+      if (biopsyNeedsMrn && newMrn.trim()) {
+        body.new_mrn = newMrn.trim();
+      }
+
       const res = await fetch(`/api/db/lesion/${lesionId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patient: {
-            age_range: form.age_range,
-            sex: form.sex,
-            monk_skin_tone: form.monk_skin_tone,
-            fitzpatrick_skin_type: form.fitzpatrick_skin_type,
-            self_reported_race: form.self_reported_race,
-          },
-          lesion: {
-            anatomic_site: form.anatomic_site,
-            vectra_id: form.vectra_id,
-            biopsied: form.biopsied,
-            clinical_diagnosis: form.clinical_diagnosis,
-          },
-        }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (json.ok) {
@@ -209,7 +232,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     <select
                       value={form.age_range}
                       onChange={(e) => updateField("age_range", e.target.value)}
-                      className={selectClass}
+                      className={baseSelectClass + " border-gray-200"}
                     >
                       {ageRanges.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
@@ -220,18 +243,26 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     <select
                       value={form.sex}
                       onChange={(e) => updateField("sex", e.target.value)}
-                      className={selectClass}
+                      className={baseSelectClass + " border-gray-200"}
                     >
                       {sexOptions.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Monk Skin Tone</label>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className={labelClass + " mb-0"}>Monk Skin Tone</label>
+                      {showRequired && skinToneMissing && (
+                        <span className="text-xs text-red-500 font-semibold">Required*</span>
+                      )}
+                    </div>
                     <select
                       value={form.monk_skin_tone ?? ""}
-                      onChange={(e) => updateField("monk_skin_tone", e.target.value ? Number(e.target.value) : null)}
-                      className={selectClass}
+                      onChange={(e) => {
+                        updateField("monk_skin_tone", e.target.value ? Number(e.target.value) : null);
+                        if (e.target.value) setShowRequired(false);
+                      }}
+                      className={baseSelectClass + (showRequired && skinToneMissing ? " border-red-500" : " border-gray-200")}
                     >
                       <option value="">Not set</option>
                       {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
@@ -241,11 +272,19 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                   </div>
 
                   <div>
-                    <label className={labelClass}>Fitzpatrick Skin Type</label>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className={labelClass + " mb-0"}>Fitzpatrick Skin Type</label>
+                      {showRequired && skinToneMissing && (
+                        <span className="text-xs text-red-500 font-semibold">Required*</span>
+                      )}
+                    </div>
                     <select
                       value={form.fitzpatrick_skin_type ?? ""}
-                      onChange={(e) => updateField("fitzpatrick_skin_type", e.target.value ? Number(e.target.value) : null)}
-                      className={selectClass}
+                      onChange={(e) => {
+                        updateField("fitzpatrick_skin_type", e.target.value ? Number(e.target.value) : null);
+                        if (e.target.value) setShowRequired(false);
+                      }}
+                      className={baseSelectClass + (showRequired && skinToneMissing ? " border-red-500" : " border-gray-200")}
                     >
                       <option value="">Not set</option>
                       {Array.from({ length: 6 }, (_, i) => i + 1).map(n => (
@@ -259,7 +298,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     <select
                       value={form.self_reported_race ?? ""}
                       onChange={(e) => updateField("self_reported_race", e.target.value || null)}
-                      className={selectClass}
+                      className={baseSelectClass + " border-gray-200"}
                     >
                       <option value="">Not set</option>
                       {raceOptions.map(r => <option key={r} value={r}>{r}</option>)}
@@ -280,7 +319,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     <select
                       value={form.clinical_diagnosis}
                       onChange={(e) => updateField("clinical_diagnosis", e.target.value)}
-                      className={selectClass}
+                      className={baseSelectClass + " border-gray-200"}
                     >
                       {clinicalDiagnoses.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
@@ -291,7 +330,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     <select
                       value={form.anatomic_site}
                       onChange={(e) => updateField("anatomic_site", e.target.value)}
-                      className={selectClass}
+                      className={baseSelectClass + " border-gray-200"}
                     >
                       {anatomicSites.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -303,7 +342,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                       type="number"
                       value={form.vectra_id ?? ""}
                       onChange={(e) => updateField("vectra_id", e.target.value ? Number(e.target.value) : null)}
-                      className={selectClass}
+                      className={baseSelectClass + " border-gray-200"}
                       placeholder="Optional"
                     />
                   </div>
@@ -312,13 +351,53 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     <label className={labelClass}>Biopsied</label>
                     <select
                       value={form.biopsied ? "true" : "false"}
-                      onChange={(e) => updateField("biopsied", e.target.value === "true")}
-                      className={selectClass}
+                      onChange={(e) => {
+                        updateField("biopsied", e.target.value === "true");
+                        if (e.target.value === "false") {
+                          setNewMrn("");
+                        }
+                      }}
+                      className={baseSelectClass + " border-gray-200"}
                     >
                       <option value="false">No</option>
                       <option value="true">Yes</option>
                     </select>
                   </div>
+
+                  {/* MRN field: shown when biopsied is true */}
+                  {form.biopsied && originalBiopsied && (
+                    <div>
+                      <label className={labelClass}>Patient Study ID/MRN</label>
+                      <input
+                        type="text"
+                        value={form.patient_id?.trim() ?? ""}
+                        readOnly
+                        className={baseSelectClass + " border-gray-200 bg-gray-200 text-gray-400 cursor-not-allowed"}
+                      />
+                    </div>
+                  )}
+
+                  {form.biopsied && !originalBiopsied && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <label className={labelClass + " mb-0"}>Patient Study ID/MRN</label>
+                        {showRequired && mrnMissing && (
+                          <span className="text-xs text-red-500 font-semibold">Required*</span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={newMrn}
+                        onChange={(e) => {
+                          setNewMrn(e.target.value);
+                          if (e.target.value.trim()) setShowRequired(false);
+                        }}
+                        placeholder="Enter patient study ID/MRN"
+                        className={baseSelectClass + (showRequired && mrnMissing ? " border-red-500" : " border-gray-200")}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

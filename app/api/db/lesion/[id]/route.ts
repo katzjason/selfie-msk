@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { pool } from "@/app/api/db/pool";
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 
 export const runtime = "nodejs";
 
@@ -70,7 +71,7 @@ export async function PUT(
   }
 
   const body = await req.json();
-  const { patient, lesion } = body;
+  const { patient, lesion, new_mrn } = body;
 
   const client = await pool.connect();
   const completedRenames: { oldPath: string; newPath: string }[] = [];
@@ -155,6 +156,43 @@ export async function PUT(
           );
         }
       }
+    }
+
+    // If new MRN provided (biopsy toggled false→true), hash and reassociate patient
+    if (new_mrn && typeof new_mrn === "string" && new_mrn.trim()) {
+      const mrnKeyPath = process.env.MRN_KEY_PATH ?? "/run/secrets/mrn_hmac_key";
+      const hmacKey = await fs.readFile(mrnKeyPath);
+      const hmac = crypto.createHmac("sha256", hmacKey);
+      hmac.update(new_mrn.trim());
+      const newPatientHash = hmac.digest("hex");
+
+      // UPSERT: create patient if hash doesn't exist, else update demographics
+      await client.query(
+        `
+        INSERT INTO patients (patient_id, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (patient_id) DO UPDATE SET
+          age_range = EXCLUDED.age_range,
+          sex = EXCLUDED.sex,
+          monk_skin_tone = EXCLUDED.monk_skin_tone,
+          fitzpatrick_skin_type = EXCLUDED.fitzpatrick_skin_type,
+          self_reported_race = EXCLUDED.self_reported_race
+        `,
+        [
+          newPatientHash,
+          patient.age_range,
+          patient.sex,
+          patient.monk_skin_tone || null,
+          patient.fitzpatrick_skin_type || null,
+          patient.self_reported_race || null,
+        ]
+      );
+
+      // Reassociate lesion with new patient
+      await client.query(
+        `UPDATE lesions SET patient_id = $1 WHERE id = $2`,
+        [newPatientHash, lesionId]
+      );
     }
 
     await client.query("COMMIT");
