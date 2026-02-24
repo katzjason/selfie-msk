@@ -97,6 +97,7 @@ export default function Capture() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [showCapturedImage, setShowCapturedImage] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
 
   const startCamera = async () => {
@@ -406,8 +407,10 @@ export default function Capture() {
   }
 
   const goToNextStep = (options?: { slide?: boolean }) => {
+    console.log("Step Index: ", stepIndex.toString()); // DELETE ME
     const { slide = false } = options ?? {};
     if(stepIndex == photoSteps.length-1){
+      if (isUploading) return;
       handleUpload();
       return;
     }
@@ -428,67 +431,73 @@ export default function Capture() {
   };
 
   const handleUpload = async () => {
-    // Assemble form data
-    let formData = new FormData();
-
-    // Adding saved patient/lesion data
-    formData.append("age", patient.age);
-    formData.append("sex", patient.sex);
-    formData.append("monk_skin_tone", patient.monkSkinTone);
-    formData.append("fitzpatrick", patient.fitzpatrick);
-    formData.append("race", patient.race);
-    formData.append("biopsy", patient.biopsy.toString());
-    formData.append("patient_id", patient.mrn);
-    formData.append("lesion_id", patient.lesionID);
-    formData.append("clinical_diagnosis", patient.clinicalDiagnosis); 
-    formData.append("anatomic_site", patient.anatomicSite);
-
-    // Adding image details
-    formData.append("device_type", getDeviceCategory());
-    formData.append("os", getOS());
-
-    type ImageMeta = { code: string; capture_time: string; filename: string };
-    const metas: ImageMeta[] = [];
-
-    const cleanDiagnosis = patient.clinicalDiagnosis
-      .replace(/[^a-z0-9]/gi, "_")
-      .toLowerCase();
-
-    for (let idx = 0; idx < imageArr.length; idx++) {
-      const img = imageArr[idx];
-      if (!img?.blob) continue;
-
-      const mimeMap : Record<string, string>= {
-        "image/png": "png",
-        "image/webp": "webp",
-        "image/jpeg": "jpg",
-        "image/jpg": "jpg",
-        "image/heic": "heic",
-        "image/avif": "avif",
-        "image/gif": "gif",
-        "image/svg+xml": "svg"
-      };
-
-      const ext = mimeMap[img.blob.type] || "jpg";
-
-      const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
-
-      // Append binary part directly from stored blob
-      formData.append("images", img.blob, filename);
-
-      // Track metadata aligned with the appended file
-      metas.push({
-        code: photoSteps[idx].id,
-        capture_time: img.captureTime,
-        filename,
-      });
-    }
-
-    formData.append("metas", JSON.stringify(metas));
-
-
-    // POST request to /api/upload
+    if (isUploading) return;
+    setIsUploading(true);
     try {
+      // Assemble form data
+      const formData = new FormData();
+
+      // Adding saved patient/lesion data
+      formData.append("age", patient.age);
+      formData.append("sex", patient.sex);
+      formData.append("monk_skin_tone", patient.monkSkinTone);
+      formData.append("fitzpatrick", patient.fitzpatrick);
+      formData.append("race", patient.race);
+      formData.append("biopsy", patient.biopsy.toString());
+      formData.append("patient_id", patient.mrn);
+      formData.append("lesion_id", patient.lesionID);
+      formData.append("clinical_diagnosis", patient.clinicalDiagnosis); 
+      formData.append("anatomic_site", patient.anatomicSite);
+
+      // Adding image details
+      formData.append("device_type", getDeviceCategory());
+      formData.append("os", getOS());
+
+      type ImageMeta = { code: string; capture_time: string; filename: string };
+      const metas: ImageMeta[] = [];
+
+      const cleanDiagnosis = patient.clinicalDiagnosis
+        .replace(/[^a-z0-9]/gi, "_")
+        .toLowerCase();
+
+      for (let idx = 0; idx < imageArr.length; idx++) {
+        const img = imageArr[idx];
+        if (!(img?.blob instanceof Blob)) continue;
+
+        const mimeMap : Record<string, string>= {
+          "image/png": "png",
+          "image/webp": "webp",
+          "image/jpeg": "jpg",
+          "image/jpg": "jpg",
+          "image/heic": "heic",
+          "image/avif": "avif",
+          "image/gif": "gif",
+          "image/svg+xml": "svg"
+        };
+
+        const ext = mimeMap[img.blob.type] || "jpg";
+
+        const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
+
+        // Append binary part directly from stored blob
+        formData.append("images", img.blob, filename);
+
+        // Track metadata aligned with the appended file
+        metas.push({
+          code: photoSteps[idx].id,
+          capture_time: img.captureTime,
+          filename,
+        });
+      }
+
+      if (metas.length === 0) {
+        showToast("Upload Error: No valid images in memory. Please retake photos and try again.", 4000);
+        return;
+      }
+
+      formData.append("metas", JSON.stringify(metas));
+
+      // POST request to /api/upload
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData
@@ -506,6 +515,8 @@ export default function Capture() {
         });
         setImageArr(Array(photoSteps.length).fill({url: "", blob: null, description: "", score: 0, captureTime: ""}));
         localStorage.setItem("showReset", "true");
+        // Navigate back to page to capture next lesion
+        router.back();
       } else {
         const errorData = await res.json().catch(() => null);
         const errorMsg = errorData?.error || `Upload failed (status ${res.status})`;
@@ -513,10 +524,9 @@ export default function Capture() {
       }
     } catch (err: any) {
       showToast("Upload Error: " + (err?.message || "Network failure"), 4000);
+    } finally {
+      setIsUploading(false);
     }
-
-    // Navigate back to page to capture next lesion
-    router.back();
   }
 
   const goToPrevStep = () => {
@@ -532,10 +542,16 @@ export default function Capture() {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.some((x) => x?.url && x.url.length > 0)) {
         // Ensure correct length and structure
-        const next = Array(photoSteps.length).fill({url: "", description: "", score: 0, captureTime: ""});
+        const next = Array(photoSteps.length).fill({url: "", blob: null, description: "", score: 0, captureTime: ""});
         for (let i = 0; i < Math.min(parsed.length, next.length); i++) {
           if (parsed[i]?.url) {
-            next[i] = parsed[i];
+            next[i] = {
+              url: parsed[i].url,
+              blob: null,
+              description: parsed[i].description ?? "",
+              score: parsed[i].score ?? 0,
+              captureTime: parsed[i].captureTime ?? "",
+            };
           }
         }
         setImageArr(next);
@@ -671,8 +687,12 @@ export default function Capture() {
               prevCallback={goToPrevStep}
               disablePrev={stepIndex === 0}
               //disableNext={stepIndex === photoSteps.length - 1}
-              disableNext={false}
-              nextText={stepIndex == photoSteps.length - 1 ? "Submit" : imageArr[stepIndex].url != "" ? "Next" : "Skip"}
+              disableNext={isUploading}
+              nextText={
+                stepIndex == photoSteps.length - 1
+                  ? (isUploading ? "Submitting..." : "Submit")
+                  : imageArr[stepIndex].url != "" ? "Next" : "Skip"
+              }
               retake={imageArr[stepIndex].url != ""}
               retakeCallback={() => {
                 // Remove the image for this step and revoke object URL
