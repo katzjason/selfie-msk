@@ -91,11 +91,15 @@ if [[ ! -f "${MRN_KEY_FILE}" ]]; then
   echo "Generating MRN HMAC key..."
   sudo mkdir -p "${SECRETS_DIR}"
   sudo openssl rand -hex 32 | sudo tee "${MRN_KEY_FILE}" >/dev/null
-  sudo chmod 600 "${MRN_KEY_FILE}"
   echo "Created: ${MRN_KEY_FILE}"
 else
   echo "MRN HMAC key already exists; leaving as-is."
 fi
+
+# Ensure the web container user (uid/gid 1001) can read the MRN key.
+# This avoids EACCES errors when hashing patient IDs during upload.
+sudo chown root:1001 "${MRN_KEY_FILE}"
+sudo chmod 640 "${MRN_KEY_FILE}"
 
 # Generate DB password
 DB_PASSWORD="$(openssl rand -hex 24)"

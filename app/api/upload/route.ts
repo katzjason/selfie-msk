@@ -30,6 +30,7 @@ function safeDiagnosis(raw: string) {
 export async function POST(req: Request) {
     const client = await pool.connect();
     const writtenFiles: string[] = [];
+    let transactionStarted = false;
 
   try {
     const data = await req.formData();
@@ -98,6 +99,7 @@ export async function POST(req: Request) {
     );
 
     await client.query("BEGIN");
+    transactionStarted = true;
     console.log("BEGINNING QUERY");
 
     const where = await client.query(`
@@ -153,7 +155,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, uploadId, imagesWritten: stored.length });
   } catch (err: any) {
     console.error(`[UPLOAD ERROR ${new Date().toISOString()}]`, err);
-    try { await client.query("ROLLBACK"); } catch {}
+    if (transactionStarted) {
+      try { await client.query("ROLLBACK"); } catch {}
+    }
     await Promise.allSettled(writtenFiles.map((p) => fs.rm(p, { force: true })));
 
     const msg = err?.message ?? "";
