@@ -6,12 +6,25 @@ The selfie app is a web app allowing clinical users to enter patient demographic
 ## Setup Context
 This code lives in a github repository that is cloned by an external user, which they do to run 'install.sh'. This sets up the web, database, image, and caddy images on their local server. Currently one user has downloaded this repository and my goal is to make it as easy as possible for them to incorporate these changes without doing too much work. The public repo lives on the "public" remote, whereas my version lives on origin/main. Both of these repositories should be identical.
 
-## Problem Descriptions
+## Goals
 
-### Dashbaord Improvements
-- When the user edits a dashboard row, the user MUST have either monk skin tone or fitzpatrick skin type set to a value. Do not let the user save changes if this is not true
-- If the lesion has biopsy set to true, then display the lesion study id/mrn in a field box below, but grayed out. If the biopsy is set to false, don't display it. If the biopsy was set to false but is changed to true, prompt for a study id/mrn below and don't let the user save without entering this value. Just like page.tsx, you should highlight this input field in red and have a required flag appear. FYI, this MRN/study id should be hashed and stored in the db just like the other routes do it.
+### Image Unavailability
+- Images captured are stored on an image volume and the respective metadata is stored on a database volume. Currently, the dashboard page does not render any images for some reason. This was working in the past, but is no longer the case. Please determine why this is happening.
 
-### General Improvments
-- The app is hosted locally on my server and is being routed to https://snapcap.mskcc.org. This was establishing a secure connection before, but somethiing just changed. Can you help diagnose why a secure connection is no longer being made? Also, be considerate of the fact that this codebase is being spun up by other users, so the certificate given to me by MSK should only be used by me (not hard coded)
--
+### Patient Study ID Visibility
+- The Study ID/MRN field on the home page page.tsx is currently only visible if 'biopsy' is also toggled. Please make this field ALWAYS visible for instances where version 'MedUniWien' is selected during the install script.
+
+### Database data overflow
+- The user has complained that when they export data from the database volume, the demographics from the most recent patient appear for all rows. This should not be the case. Please diagnosis this issue
+
+### iPHone 6 Compatibility
+- The user has an iPhone 6 using Safari to on ios 12.x access this app. This is only one of their devices, so it's not a dealbreakder. However, if it would be possible to make this app compatible with this older device, please do so.
+
+### Unknown Upload Error
+- The user is receiving quite a few unknown upload errors. Please check if there is any reason that might be causing this to be the case on their installation, but not mine.
+
+### HTTPS Cert
+- The app is still showing as unsecure when I view it, even though this was resolved previously. Why is this happening?
+
+
+Please make these changes in the vienna-errors branch.

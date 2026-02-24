@@ -302,10 +302,10 @@ function DashboardContent() {
                                                 <img
                                                     key={idx}
                                                     className="w-full object-cover rounded-lg max-h-[350px] md:max-h-[420px] hover:cursor-pointer"
-                                                    src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/images/${encodeURIComponent(value.file.substring(13))}`}
+                                                    src={`/api/images/${encodeURIComponent(value.file.substring(13))}`}
                                                     alt={value.image_type}
                                                     onClick={() => {
-                                                        setEnlargedImage(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/images/${encodeURIComponent(value.file.substring(13))}`);
+                                                        setEnlargedImage(`/api/images/${encodeURIComponent(value.file.substring(13))}`);
                                                         setEnlargedImageType(value.image_type);
                                                         setEnlargedImageId(value.id);
                                                         setEnlargedImagePHI(value.contains_phi);

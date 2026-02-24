@@ -36,12 +36,15 @@ export async function POST(req: Request) {
     // Required fields
     const patient_id = String(data.get("patient_id") ?? "").trim();
     const mrn_key_path = process.env.MRN_KEY_PATH ?? "/run/secrets/mrn_hmac_key";
-    let hash = null;
+    let hash: string;
     if (patient_id) {
       const hmacKey = await fs.readFile(mrn_key_path);
       const hmac = crypto.createHmac("sha256", hmacKey);
       hmac.update(patient_id);
       hash = hmac.digest("hex");
+    } else {
+      // Generate a unique patient_id so MRN-less patients don't collide
+      hash = crypto.createHash("sha256").update(crypto.randomUUID()).digest("hex");
     }
 
     const age_range = String(data.get("age") ?? "").trim();
@@ -116,7 +119,7 @@ export async function POST(req: Request) {
         fitzpatrick_skin_type = EXCLUDED.fitzpatrick_skin_type,
         self_reported_race = EXCLUDED.self_reported_race
       `,
-      [hash ?? "", age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race]
+      [hash, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race]
     );
 
     console.log("INSERTED PATIENT");
@@ -127,7 +130,7 @@ export async function POST(req: Request) {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
       `,
-      [hash ?? "", anatomic_site, lesion_id, biopsied, clinical_diagnosis]
+      [hash, anatomic_site, lesion_id, biopsied, clinical_diagnosis]
     );
 
     console.log("INSERTED LESION");
@@ -149,10 +152,31 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, uploadId, imagesWritten: stored.length });
   } catch (err: any) {
-    console.log(err.message)
+    console.error(`[UPLOAD ERROR ${new Date().toISOString()}]`, err);
     try { await client.query("ROLLBACK"); } catch {}
     await Promise.allSettled(writtenFiles.map((p) => fs.rm(p, { force: true })));
-    return NextResponse.json({ ok: false, error: err?.message ?? "Unknown failure" }, { status: 500 });
+
+    const msg = err?.message ?? "";
+    const code = err?.code ?? "";
+    let userMessage = "Unknown failure";
+
+    if (code === "ENOENT" && msg.includes("mrn_hmac_key")) {
+      userMessage = "Server configuration error: MRN key file not found. Contact administrator.";
+    } else if (code === "EACCES") {
+      userMessage = "Server permission error: Cannot access required files. Contact administrator.";
+    } else if (code === "ENOSPC") {
+      userMessage = "Server storage full: No disk space remaining for images. Contact administrator.";
+    } else if (msg.includes("timeout") || msg.includes("ETIMEDOUT")) {
+      userMessage = "Database connection timed out. Please try again.";
+    } else if (msg.includes("too many clients") || msg.includes("remaining connection slots")) {
+      userMessage = "Server is busy. Please wait and try again.";
+    } else if (msg.includes("connection refused") || msg.includes("ECONNREFUSED")) {
+      userMessage = "Database unavailable. Please try again in a moment.";
+    } else if (msg) {
+      userMessage = `Upload failed: ${msg.substring(0, 120)}`;
+    }
+
+    return NextResponse.json({ ok: false, error: userMessage }, { status: 500 });
   } finally {
     client.release();
   }

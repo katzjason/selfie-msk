@@ -160,7 +160,7 @@ function HomeContent() {
                     }
                 ></FormField>
 
-                {!newPatient && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
+                {(!newPatient || vienna) && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
                     children={
                         <input
                           type="text"
@@ -243,7 +243,7 @@ function HomeContent() {
                 />
             </div>
 
-            {((biopsy && newPatient) || (biopsy && !newPatient && !mrn && !showDemographics)) && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
+            {!vienna && ((biopsy && newPatient) || (biopsy && !newPatient && !mrn && !showDemographics)) && (<FormField label="Patient Study ID/MRN" requiredFlag={false}
                 children={
                     <input
                         type="text"
