@@ -67,8 +67,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Add enterprise certificate to trusted CA store (optional — file may not exist for other users)
-COPY certs/enterprise-ca.pe[m] /usr/local/share/ca-certificates/
-RUN update-ca-certificates
+COPY certs/ /tmp/build-certs/
+RUN if [ -f /tmp/build-certs/enterprise-ca.pem ]; then \
+      cp /tmp/build-certs/enterprise-ca.pem /usr/local/share/ca-certificates/enterprise-ca.crt; \
+    fi && update-ca-certificates && rm -rf /tmp/build-certs
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
