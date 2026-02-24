@@ -61,6 +61,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
   const [showRequired, setShowRequired] = useState(false);
   const [originalBiopsied, setOriginalBiopsied] = useState(false);
   const [newMrn, setNewMrn] = useState("");
+  const vienna = process.env.NEXT_PUBLIC_VERSION === "MedUniWien";
 
   // Prevent body scroll
   useEffect(() => {
@@ -293,7 +294,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     </select>
                   </div>
 
-                  <div>
+                  {!vienna && (<div>
                     <label className={labelClass}>Self-Reported Race</label>
                     <select
                       value={form.self_reported_race ?? ""}
@@ -303,7 +304,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                       <option value="">Not set</option>
                       {raceOptions.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
-                  </div>
+                  </div> )}
                 </div>
               </div>
 
