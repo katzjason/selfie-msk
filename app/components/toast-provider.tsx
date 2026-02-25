@@ -52,7 +52,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               {toast.message}
             </div>
         
-            {/* Checkmark container */}
+            {/* Checkmark/X container */}
             <div className="flex items-center justify-center h-14 w-14 rounded-full bg-white">
               <svg
                 className="h-7 w-7"
@@ -69,7 +69,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     <stop offset="100%" stopColor="#ec4899" /> {/* pink-500 */}
                   </linearGradient>
                 </defs>
-                <path d="M20 6L9 17l-5-5" />
+
+                {toast.message.toLowerCase().includes("uploaded lesion no") ? (
+                  <path d="M20 6L9 17l-5-5" />
+                ) : (
+                  <>
+                    <path d="M18 6L6 18" />
+                    <path d="M6 6l12 12" />
+                  </>
+                )}
               </svg>
             </div>
           </div>
