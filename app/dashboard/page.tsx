@@ -5,6 +5,7 @@ import MenuIcon from '@/app/components/menu-icon';
 import { FeedbackProvider, usefeedback } from '@/app/components/feedback-provider';
 import EnlargedImage from '@/app/components/enlarged-image';
 import EditLesionModal from '@/app/components/edit-lesion-modal';
+import EditLesionModal from '@/app/components/edit-lesion-modal';
 import { useRouter } from 'next/navigation';
 import { Pencil } from 'lucide-react';
 import Switch from '@mui/material/Switch';
