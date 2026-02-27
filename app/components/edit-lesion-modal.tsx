@@ -59,7 +59,6 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<LesionDetail | null>(null);
   const [showRequired, setShowRequired] = useState(false);
-  const [originalBiopsied, setOriginalBiopsied] = useState(false);
   const [newMrn, setNewMrn] = useState("");
   const vienna = process.env.NEXT_PUBLIC_VERSION === "MedUniWien";
 
@@ -90,7 +89,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
             biopsied: d.biopsied,
             clinical_diagnosis: d.clinical_diagnosis,
           });
-          setOriginalBiopsied(d.biopsied);
+          setNewMrn(d.patient_id?.trim() ?? "");
         } else {
           setError("Failed to load lesion data");
         }
@@ -109,14 +108,12 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
 
   // Derived validation flags
   const skinToneMissing = form ? !form.monk_skin_tone && !form.fitzpatrick_skin_type : false;
-  const biopsyNeedsMrn = form ? form.biopsied && !originalBiopsied : false;
-  const mrnMissing = biopsyNeedsMrn && newMrn.trim() === "";
 
   const handleSave = async () => {
     if (!form) return;
 
     // Validation
-    if (skinToneMissing || mrnMissing) {
+    if (skinToneMissing) {
       setShowRequired(true);
       return;
     }
@@ -140,8 +137,8 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
         },
       };
 
-      // Include new MRN if biopsy was toggled from false to true
-      if (biopsyNeedsMrn && newMrn.trim()) {
+      // Include new MRN if it was changed from the original
+      if (newMrn.trim() && newMrn.trim() !== form.patient_id?.trim()) {
         body.new_mrn = newMrn.trim();
       }
 
@@ -352,12 +349,7 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     <label className={labelClass}>Biopsied</label>
                     <select
                       value={form.biopsied ? "true" : "false"}
-                      onChange={(e) => {
-                        updateField("biopsied", e.target.value === "true");
-                        if (e.target.value === "false") {
-                          setNewMrn("");
-                        }
-                      }}
+                      onChange={(e) => updateField("biopsied", e.target.value === "true")}
                       className={baseSelectClass + " border-gray-200"}
                     >
                       <option value="false">No</option>
@@ -365,40 +357,16 @@ export default function EditLesionModal({ lesionId, onClose, onSaved, onDeleted 
                     </select>
                   </div>
 
-                  {/* MRN field: shown when biopsied is true */}
-                  {form.biopsied && originalBiopsied && (
-                    <div>
-                      <label className={labelClass}>Patient Study ID/MRN</label>
-                      <input
-                        type="text"
-                        value={form.patient_id?.trim() ?? ""}
-                        readOnly
-                        className={baseSelectClass + " border-gray-200 bg-gray-200 text-gray-400 cursor-not-allowed"}
-                      />
-                    </div>
-                  )}
-
-                  {form.biopsied && !originalBiopsied && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <label className={labelClass + " mb-0"}>Patient Study ID/MRN</label>
-                        {showRequired && mrnMissing && (
-                          <span className="text-xs text-red-500 font-semibold">Required*</span>
-                        )}
-                      </div>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={newMrn}
-                        onChange={(e) => {
-                          setNewMrn(e.target.value);
-                          if (e.target.value.trim()) setShowRequired(false);
-                        }}
-                        placeholder="Enter patient study ID/MRN"
-                        className={baseSelectClass + (showRequired && mrnMissing ? " border-red-500" : " border-gray-200")}
-                      />
-                    </div>
-                  )}
+                  <div>
+                    <label className={labelClass}>Patient Study ID/MRN</label>
+                    <input
+                      type="text"
+                      value={newMrn}
+                      onChange={(e) => setNewMrn(e.target.value)}
+                      placeholder="Enter patient study ID/MRN"
+                      className={baseSelectClass + " border-gray-200"}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

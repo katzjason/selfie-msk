@@ -171,7 +171,7 @@ export async function PUT(
       }
     }
 
-    // If new MRN provided (biopsy toggled false→true), use raw value and reassociate patient
+    // If new MRN provided and different from current, update all lesions for this patient
     if (new_mrn && typeof new_mrn === "string" && new_mrn.trim()) {
       const newPatientId = new_mrn.trim();
 
@@ -197,20 +197,29 @@ export async function PUT(
         ]
       );
 
-      // Reassociate lesion with new patient
+      // Reassociate ALL lesions with the old patient_id to the new one
       await client.query(
-        `UPDATE lesions SET patient_id = $1 WHERE id = $2`,
-        [newPatientId, lesionId]
+        `UPDATE lesions SET patient_id = $1 WHERE patient_id = $2`,
+        [newPatientId, patientId]
       );
 
-      // Rename image files: replace old ID prefix with new MRN prefix
+      // Delete the old patient record (all lesions have been moved)
+      await client.query(
+        `DELETE FROM patients WHERE patient_id = $1`,
+        [patientId]
+      );
+
+      // Rename image files across ALL lesions for this patient
       const oldIdPrefix = cleanIdForFilename(patientId);
       const newIdPrefix = cleanIdForFilename(newPatientId);
 
       if (oldIdPrefix !== newIdPrefix) {
         const imageRows = await client.query(
-          `SELECT id, file_path FROM images WHERE lesion_id = $1`,
-          [lesionId]
+          `SELECT i.id, i.file_path
+           FROM images i
+           JOIN lesions l ON i.lesion_id = l.id
+           WHERE l.patient_id = $1`,
+          [newPatientId]
         );
 
         for (const img of imageRows.rows) {
