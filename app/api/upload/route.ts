@@ -27,6 +27,10 @@ function safeDiagnosis(raw: string) {
   return diagnosisDict[raw] ?? "Other";
 }
 
+function cleanIdForFilename(id: string): string {
+  return id.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase();
+}
+
 export async function POST(req: Request) {
     const client = await pool.connect();
     const writtenFiles: string[] = [];
@@ -36,16 +40,12 @@ export async function POST(req: Request) {
     const data = await req.formData();
     // Required fields
     const patient_id = String(data.get("patient_id") ?? "").trim();
-    const mrn_key_path = process.env.MRN_KEY_PATH ?? "/run/secrets/mrn_hmac_key";
-    let hash: string;
+    let patientIdValue: string;
     if (patient_id) {
-      const hmacKey = await fs.readFile(mrn_key_path);
-      const hmac = crypto.createHmac("sha256", hmacKey);
-      hmac.update(patient_id);
-      hash = hmac.digest("hex");
+      patientIdValue = patient_id; // Use raw MRN/Study ID directly
     } else {
       // Generate a unique patient_id so MRN-less patients don't collide
-      hash = crypto.createHash("sha256").update(crypto.randomUUID()).digest("hex");
+      patientIdValue = crypto.createHash("sha256").update(crypto.randomUUID()).digest("hex");
     }
 
     const age_range = String(data.get("age") ?? "").trim();
@@ -87,11 +87,12 @@ export async function POST(req: Request) {
     await fs.mkdir(imageDir, { recursive: true });
 
     // Write files first (so you only store DB rows for real files)
-    // Use server-side filenames to avoid collisions
+    // Prepend sanitized patient ID to client-supplied filename
+    const idPrefix = cleanIdForFilename(patientIdValue);
     const stored = await Promise.all(
       images.map(async (file, i) => {
         const bytes = Buffer.from(await file.arrayBuffer());
-        const absPath = path.join(imageDir, file.name);
+        const absPath = path.join(imageDir, `${idPrefix}_${file.name}`);
         await fs.writeFile(absPath, bytes);
         writtenFiles.push(absPath);
         return { absPath, originalName: file.name, capturedAt: metasArr[i]["capture_time"], imageType: metasArr[i]?.code };
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
         fitzpatrick_skin_type = EXCLUDED.fitzpatrick_skin_type,
         self_reported_race = EXCLUDED.self_reported_race
       `,
-      [hash, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race]
+      [patientIdValue, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race]
     );
 
     console.log("INSERTED PATIENT");
@@ -132,7 +133,7 @@ export async function POST(req: Request) {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
       `,
-      [hash, anatomic_site, lesion_id, biopsied, clinical_diagnosis]
+      [patientIdValue, anatomic_site, lesion_id, biopsied, clinical_diagnosis]
     );
 
     console.log("INSERTED LESION");

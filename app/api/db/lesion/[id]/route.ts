@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { pool } from "@/app/api/db/pool";
 import fs from "node:fs/promises";
 import path from "node:path";
-import crypto from "node:crypto";
 
 export const runtime = "nodejs";
 
 function cleanDiagnosisPrefix(diagnosis: string): string {
   return diagnosis.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+}
+
+function cleanIdForFilename(id: string): string {
+  return id.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase();
 }
 
 // GET /api/db/lesion/[id] — fetch full detail for one lesion
@@ -129,8 +132,9 @@ export async function PUT(
     // If diagnosis changed, rename image files
     const newDiagnosis = lesion.clinical_diagnosis;
     if (oldDiagnosis !== newDiagnosis) {
-      const oldPrefix = cleanDiagnosisPrefix(oldDiagnosis);
-      const newPrefix = cleanDiagnosisPrefix(newDiagnosis);
+      const oldDiagPrefix = cleanDiagnosisPrefix(oldDiagnosis);
+      const newDiagPrefix = cleanDiagnosisPrefix(newDiagnosis);
+      const idPrefix = cleanIdForFilename(patientId);
 
       const imageRows = await client.query(
         `SELECT id, file_path FROM images WHERE lesion_id = $1`,
@@ -142,14 +146,23 @@ export async function PUT(
         const dir = path.dirname(filePath);
         const filename = path.basename(filePath);
 
-        // Only rename if filename starts with the old prefix
-        if (filename.startsWith(oldPrefix + "_")) {
-          const newFilename = newPrefix + "_" + filename.slice(oldPrefix.length + 1);
-          const newFilePath = path.join(dir, newFilename);
+        let newFilename: string | null = null;
 
+        // New format: {idPrefix}_{diagnosis}_{timestamp}_{imageType}.{ext}
+        const newFormatPrefix = idPrefix + "_" + oldDiagPrefix + "_";
+        if (filename.startsWith(newFormatPrefix)) {
+          const rest = filename.slice(newFormatPrefix.length);
+          newFilename = idPrefix + "_" + newDiagPrefix + "_" + rest;
+        }
+        // Old format (pre-migration): {diagnosis}_{uuid}.{ext}
+        else if (filename.startsWith(oldDiagPrefix + "_")) {
+          newFilename = newDiagPrefix + "_" + filename.slice(oldDiagPrefix.length + 1);
+        }
+
+        if (newFilename) {
+          const newFilePath = path.join(dir, newFilename);
           await fs.rename(filePath, newFilePath);
           completedRenames.push({ oldPath: filePath, newPath: newFilePath });
-
           await client.query(
             `UPDATE images SET file_path = $1 WHERE id = $2`,
             [newFilePath, img.id]
@@ -158,15 +171,11 @@ export async function PUT(
       }
     }
 
-    // If new MRN provided (biopsy toggled false→true), hash and reassociate patient
+    // If new MRN provided (biopsy toggled false→true), use raw value and reassociate patient
     if (new_mrn && typeof new_mrn === "string" && new_mrn.trim()) {
-      const mrnKeyPath = process.env.MRN_KEY_PATH ?? "/run/secrets/mrn_hmac_key";
-      const hmacKey = await fs.readFile(mrnKeyPath);
-      const hmac = crypto.createHmac("sha256", hmacKey);
-      hmac.update(new_mrn.trim());
-      const newPatientHash = hmac.digest("hex");
+      const newPatientId = new_mrn.trim();
 
-      // UPSERT: create patient if hash doesn't exist, else update demographics
+      // UPSERT: create patient if MRN doesn't exist, else update demographics
       await client.query(
         `
         INSERT INTO patients (patient_id, age_range, sex, monk_skin_tone, fitzpatrick_skin_type, self_reported_race)
@@ -179,7 +188,7 @@ export async function PUT(
           self_reported_race = EXCLUDED.self_reported_race
         `,
         [
-          newPatientHash,
+          newPatientId,
           patient.age_range,
           patient.sex,
           patient.monk_skin_tone || null,
@@ -191,8 +200,42 @@ export async function PUT(
       // Reassociate lesion with new patient
       await client.query(
         `UPDATE lesions SET patient_id = $1 WHERE id = $2`,
-        [newPatientHash, lesionId]
+        [newPatientId, lesionId]
       );
+
+      // Rename image files: replace old ID prefix with new MRN prefix
+      const oldIdPrefix = cleanIdForFilename(patientId);
+      const newIdPrefix = cleanIdForFilename(newPatientId);
+
+      if (oldIdPrefix !== newIdPrefix) {
+        const imageRows = await client.query(
+          `SELECT id, file_path FROM images WHERE lesion_id = $1`,
+          [lesionId]
+        );
+
+        for (const img of imageRows.rows) {
+          const filePath = img.file_path as string;
+          const dir = path.dirname(filePath);
+          const filename = path.basename(filePath);
+
+          let newFilename: string;
+          if (filename.startsWith(oldIdPrefix + "_")) {
+            // New format: replace the ID prefix
+            newFilename = newIdPrefix + "_" + filename.slice(oldIdPrefix.length + 1);
+          } else {
+            // Old format (pre-migration): prepend new ID prefix
+            newFilename = newIdPrefix + "_" + filename;
+          }
+
+          const newFilePath = path.join(dir, newFilename);
+          await fs.rename(filePath, newFilePath);
+          completedRenames.push({ oldPath: filePath, newPath: newFilePath });
+          await client.query(
+            `UPDATE images SET file_path = $1 WHERE id = $2`,
+            [newFilePath, img.id]
+          );
+        }
+      }
     }
 
     await client.query("COMMIT");

@@ -477,7 +477,10 @@ export default function Capture() {
 
         const ext = mimeMap[img.blob.type] || "jpg";
 
-        const filename = `${cleanDiagnosis}_${crypto.randomUUID()}.${ext}`;
+        // Format captureTime (ISO string) into compact YYYYMMDD_HHmmss
+        const ts = img.captureTime.replace(/[-:]/g, "").replace("T", "_").slice(0, 15);
+        const imageType = photoSteps[idx].id;
+        const filename = `${cleanDiagnosis}_${ts}_${imageType}.${ext}`;
 
         // Append binary part directly from stored blob
         formData.append("images", img.blob, filename);
