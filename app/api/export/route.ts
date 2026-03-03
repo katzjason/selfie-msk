@@ -23,7 +23,12 @@ export async function POST(request: Request) {
     let paramIndex = 1;
 
     if (lastMonths.toLowerCase() !== 'all') {
-      whereClauses.push(`i.captured_at >= NOW() - INTERVAL '${lastMonths} months'`);
+      if (lastMonths.includes('.')){
+        let lastWeeks = parseInt(lastMonths.split('.')[1]);
+        whereClauses.push(`i.captured_at >= NOW() - INTERVAL '1 week' * ${lastWeeks}`);
+      } else {
+        whereClauses.push(`i.captured_at >= NOW() - INTERVAL '${lastMonths} months'`);
+      }
     }
 
     if (!phiAllowed) {

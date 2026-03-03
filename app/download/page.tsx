@@ -6,7 +6,7 @@ import { FeedbackProvider, usefeedback } from '@/app/components/feedback-provide
 import { useRouter } from 'next/navigation';
 
 const imageQualityFilters : string[] = ["Good quality only", "All"];
-const dateFilters : number[] = [1, 2, 3, 6, -1];
+const dateFilters : number[] = [0.1, 0.2, 1, 2, 3, 6, -1];
 
 
 function DownloadContent() {
@@ -60,6 +60,8 @@ function DownloadContent() {
             else if (filterDate === "2") lastMonths = "2";
             else if (filterDate === "3") lastMonths = "3";
             else if (filterDate === "6") lastMonths = "6";
+            else if (filterDate === "0.1") lastMonths = "0.1";
+            else if (filterDate === "0.2") lastMonths = "0.2";
 
             const response = await fetch('/api/export', {
                 method: 'POST',
@@ -141,7 +143,7 @@ function DownloadContent() {
                     <option value="">Filter by date...</option>
                     {dateFilters.map((option) => (
                     <option key={option} value={option}>
-                        {option == 1 ? "Last " + option + " month" : (option == -1 ? "All" : "Last " + option + " months")}  
+                        {option == 1 ? "Last " + option + " month" : (option == -1 ? "All" : (option < 1 ? "Last " + option * 10 + " weeks" : "Last " + option + " months"))}  
                     </option>
                     ))}
                 </select>
